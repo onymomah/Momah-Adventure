@@ -408,16 +408,28 @@ async function callGroq(systemPrompt, messages, apiKey) {
 
 async function callStoryAPI(systemPrompt, messages, apiKey, provider) {
   let raw = "";
-  if (provider === "gemini")    raw = await callGemini(systemPrompt, messages, apiKey);
+  if (provider === "gemini")        raw = await callGemini(systemPrompt, messages, apiKey);
   else if (provider === "deepseek") raw = await callDeepSeek(systemPrompt, messages, apiKey);
   else if (provider === "groq")     raw = await callGroq(systemPrompt, messages, apiKey);
   else                              raw = await callAnthropic(systemPrompt, messages, apiKey);
   const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-  const arrMatch = clean.match(/\[[\s\S]*\]/);
+  // Always look for outermost object for story beats
   const objMatch = clean.match(/\{[\s\S]*\}/);
-  if (arrMatch) { try { return JSON.parse(arrMatch[0]); } catch {} }
   if (!objMatch) throw new Error("Story engine returned an unexpected response. Tap retry.");
   return JSON.parse(objMatch[0]);
+}
+
+async function callWorldsAPI(systemPrompt, messages, apiKey, provider) {
+  let raw = "";
+  if (provider === "gemini")        raw = await callGemini(systemPrompt, messages, apiKey);
+  else if (provider === "deepseek") raw = await callDeepSeek(systemPrompt, messages, apiKey);
+  else if (provider === "groq")     raw = await callGroq(systemPrompt, messages, apiKey);
+  else                              raw = await callAnthropic(systemPrompt, messages, apiKey);
+  const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+  // Look for outermost array for world generation
+  const arrMatch = clean.match(/\[[\s\S]*\]/);
+  if (!arrMatch) throw new Error("World generation returned unexpected response.");
+  return JSON.parse(arrMatch[0]);
 }
 
 const TONES = [
@@ -590,18 +602,11 @@ Respond ONLY with a JSON array, no markdown, no explanation:
   {"id": 4, "emoji": "...", "text": "..."},
   {"id": 5, "emoji": "...", "text": "..."}
 ]`;
-      const raw = await callStoryAPI("You generate creative story world options for children. Respond only with valid JSON.", 
-        [{ role: "user", content: prompt }], apiKey, provider);
-      // raw might be parsed object or string
-      let parsed;
-      if (Array.isArray(raw)) {
-        parsed = raw;
-      } else if (typeof raw === "string") {
-        parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-      } else {
-        // callStoryAPI returns parsed JSON — if it's not an array, extract from object
-        parsed = Object.values(raw).find(v => Array.isArray(v)) || [];
-      }
+      const parsed = await callWorldsAPI(
+        "You generate creative story world options for children. Respond only with a valid JSON array, no markdown, no explanation.",
+        [{ role: "user", content: prompt }],
+        apiKey, provider
+      );
       if (Array.isArray(parsed) && parsed.length > 0) {
         setWorlds(parsed);
       } else {
