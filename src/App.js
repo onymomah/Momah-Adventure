@@ -38,7 +38,7 @@ const FAMILY_NAMES = ["justina","nathaniel","ony","oxajyn","paityn","langston","
 // ─── PROVIDERS ───
 const PROVIDERS = [
   { id: "anthropic", label: "Claude (recommended)", model: "claude-sonnet-4-20250514", prefix: "sk-ant-" },
-  { id: "gemini", label: "Gemini", model: "gemini-2.0-flash", prefix: "" },
+  { id: "gemini", label: "Gemini", model: "gemini-2.5-flash", prefix: "" },
   { id: "deepseek", label: "DeepSeek", model: "deepseek-chat", prefix: "" },
   { id: "groq", label: "Groq", model: "llama-3.3-70b-versatile", prefix: "" },
 ];
@@ -743,11 +743,29 @@ export default function App() {
   }
 
   // ── TTS ──
+  function getBestVoice() {
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    // Prefer Google voices (Chrome), then any English female, then any English
+    const prefs = [
+      v => v.name.includes("Google") && v.lang.startsWith("en") && v.name.includes("Female"),
+      v => v.name.includes("Google") && v.lang.startsWith("en"),
+      v => v.name.includes("Samantha"),  // macOS/iOS
+      v => v.name.includes("Karen"),     // macOS/iOS Australian
+      v => v.lang.startsWith("en") && v.name.includes("Female"),
+      v => v.lang.startsWith("en"),
+    ];
+    for (const pref of prefs) { const found = voices.find(pref); if (found) return found; }
+    return voices[0];
+  }
   function speak(text) {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text.replace(/\n/g, " "));
-    u.rate = 0.95; window.speechSynthesis.speak(u);
+    const voice = getBestVoice();
+    if (voice) u.voice = voice;
+    u.rate = 0.92; u.pitch = 1.05;
+    window.speechSynthesis.speak(u);
   }
   function stopSpeak() { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); }
 
