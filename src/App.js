@@ -391,7 +391,7 @@ CHARACTERS:
 - Start each character with only: the name they chose, a vague role that fits the world, one small detail. Nothing more.
 - Track choices silently as character-building. Courage, kindness, caution, humor all emerge from patterns.
 - At campfire beats, reveal one: a hidden trait, a talent, a weapon's significance, or a single weighted choice.
-- The emotional stakes question ("What would your character do anything to protect?") is asked at the first campfire. The answer feeds the villain design.
+- The emotional stakes question ("What would your character do anything to protect?") is asked at the first campfire. Present it as selectable choices (A, B, C), not as an open-ended question in the narration. Example choices: "A. My family", "B. My friends", "C. Something I just found." The answer feeds the villain design.
 - Special abilities emerge through the story, not upfront. Offer as a single choice: "Something unlocks. Do you use it?"
 
 VILLAIN:
@@ -458,6 +458,7 @@ SECRET ACHIEVEMENTS (ten examples): The Protector's Mark, The Patient Eye, The F
     });
   }
 
+  prompt += `\nCRITICAL: Every beat except closing MUST include a "choices" array with at least 2 options. Never leave choices empty or null on a non-closing beat. If the beat asks a question, present the answers as selectable choices. The player can only interact through choices. No open-ended questions in narration without corresponding choice buttons.`;
   prompt += `\nIMPORTANT: Respond with ONLY the JSON object. No markdown code fences. No explanation. No text before or after the JSON.`;
   return prompt;
 }
@@ -1437,6 +1438,17 @@ export default function App() {
                       sendBeat(`${who} chose option ${c.label}: "${c.text}". Continue the story.`);
                     }} />
                 ))}
+              </div>
+            )}
+
+            {/* Recovery: no choices returned on a non-closing beat */}
+            {allRevealed && (!beat.choices || beat.choices.length === 0) && !beat.isEnding && !loading && (
+              <div style={{ marginTop: 12 }}>
+                <p style={{ color: C.terraLight, fontSize: 13, marginBottom: 8 }}>The story forgot to offer choices. Tap below to nudge it forward.</p>
+                <button onClick={() => { SFX.click(); sendBeat("The player is waiting for choices. Continue the story and provide at least 2 choices (A, B) for what to do next. Do not repeat the previous narration."); }}
+                  style={{ background: `linear-gradient(135deg, ${C.green} 0%, #2a8f48 100%)`, color: C.cream, border: "none", borderRadius: 10, padding: "12px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
+                  Continue the Story
+                </button>
               </div>
             )}
           </div>
