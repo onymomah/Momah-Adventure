@@ -1021,7 +1021,6 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
   const [dashTaps, setDashTaps] = useState(0);
   const dashTimer = useRef(null);
   function handleDashTap() { setDashTaps(d => d + 1); clearTimeout(dashTimer.current); dashTimer.current = setTimeout(() => setDashTaps(0), 2000); if (dashTaps >= 2) { setShowDashboard(true); setDashTaps(0); } }
-  const dashTimer = useRef(null);
 
   useAmbientMusic(musicActive ? musicTrack : "none", muted);
 
