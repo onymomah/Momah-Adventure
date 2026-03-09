@@ -482,38 +482,7 @@ export default function App() {
       </div>
     );
   }
-    ];
-    return (
-      <div style={{ minHeight: "100vh", background: C.ink, color: C.cream, fontFamily: "'Playfair Display', Georgia, serif", overflowX: "hidden", position: "relative" }}>
-        {/* Atmospheric background */}
-        <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-          <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 900, height: 700, background: "radial-gradient(ellipse 60% 55% at 50% 30%, rgba(212,92,26,0.22) 0%, rgba(180,60,10,0.10) 40%, transparent 70%)", filter: "blur(2px)" }} />
-          <div style={{ position: "absolute", top: "22%", left: "50%", transform: "translateX(-50%)", width: 600, height: 300, background: "radial-gradient(ellipse 50% 40% at 50% 50%, rgba(245,200,66,0.09) 0%, transparent 70%)" }} />
-          <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", height: 300, background: "linear-gradient(to top, rgba(5,14,7,0.95) 0%, transparent 100%)" }} />
-          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.025 }}><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch" /><feColorMatrix type="saturate" values="0" /></filter><rect width="100%" height="100%" filter="url(#noise)" /></svg>
-        </div>
 
-        {/* Nav bar */}
-        <nav style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(245,200,66,0.08)", background: "rgba(5,14,7,0.7)", backdropFilter: "blur(12px)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 22 }}>✦</span>
-            <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 0.3, background: `linear-gradient(90deg, ${C.cream} 0%, ${C.gold} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Storyverse AI</span>
-          </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            {childMode && <span style={{ background: "rgba(30,107,53,0.3)", color: "#2d9e52", fontSize: 10, padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>🔒 CHILD</span>}
-            <button onClick={toggleChildMode} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{childMode ? "🔒" : "🔓"}</button>
-            <button onClick={() => setMuted(m => !m)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{muted ? "🔇" : "🔊"}</button>
-            <button onClick={() => setShowKeySetup(true)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>🔑</button>
-          </div>
-        </nav>
-
-        {/* Main content */}
-        <main style={{ position: "relative", zIndex: 5, maxWidth: 1060, margin: "0 auto", padding: "0 24px 80px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {/* Hero section */}
-          <section style={{ textAlign: "center", padding: "100px 24px 70px", maxWidth: 780 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,200,66,0.09)", border: "1px solid rgba(245,200,66,0.22)", borderRadius: 100, padding: "5px 14px", marginBottom: 36 }}>
-              <span style={{ fontSize: 12 }}>✦</span>
-              <span style={{ color: C.gold, fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 700 }}>AI-Powered Family Storytelling</span>
   if (phase === "setup_key") {
     return <KeySetupScreen provider={provider} setProvider={setProvider} keyInput={keyInput} setKeyInput={setKeyInput} onComplete={(k, p) => { setApiKey(k); setProvider(p); localStorage.setItem("momah_api_key", k); localStorage.setItem("momah_provider", p); setPhase("setup_mode"); }} />;
   }
