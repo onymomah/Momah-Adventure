@@ -217,6 +217,22 @@ const BRUTAL = `You are a TERMINAL REPORT narrator. Forensic. Clinical. Every se
 
 function getBattleToneSystem(tone) { if (tone === 'kids_young') return KIDS_YOUNG; if (tone === 'kids_older') return KIDS_OLDER; if (tone === 'brutal') return BRUTAL; return INTENSE; }
 function getMaxBeats(tone) { return tone === 'kids_young' ? 5 : 6; }
+const BATTLE_LENGTHS = [
+  { id: 'scout', label: 'Scout', sub: '3-4 beats, quick and decisive', icon: '⚡', min: 3, max: 4 },
+  { id: 'hero', label: 'Hero', sub: '5-6 beats, full experience', icon: '⚔️', min: 5, max: 6 },
+  { id: 'champion', label: 'Champion', sub: '7-8 beats, extended battle', icon: '🛡️', min: 7, max: 8 },
+  { id: 'legend', label: 'Legend', sub: '9+ beats, epic saga', icon: '👑', min: 9, max: 12 },
+];
+const NARRATIVE_DENSITY = [
+  { id: 'short', label: 'Short', sub: '80-120 words per beat', icon: '⚡', words: '80-120', desc: 'Be concise. No filler. Every sentence advances the action.' },
+  { id: 'quest', label: 'Quest', sub: '150-250 words per beat', icon: '📖', words: '150-250', desc: 'Balanced prose with enough detail to feel like a real adventure.' },
+  { id: 'cinematic', label: 'Cinematic', sub: '300-450 words per beat', icon: '🪶', words: '300-450', desc: 'Paint full scenes with sensory detail, emotional beats, and immersive storytelling.' },
+];
+const ADVENTURE_DENSITY = [
+  { id: 'short', label: 'Short', sub: '100-150 words per beat', icon: '⚡', words: '100-150', desc: 'Quick decisions, fast pacing. Every sentence moves the story forward.' },
+  { id: 'quest', label: 'Quest', sub: '200-350 words per beat', icon: '📖', words: '200-350', desc: 'Balanced prose with enough detail to set scenes and build tension.' },
+  { id: 'cinematic', label: 'Cinematic', sub: '400-600 words per beat', icon: '🪶', words: '400-600', desc: 'Full scenes with NPC dialogue, environmental detail, and emotional beats.' },
+];
 
 const ARCHETYPES = [
   { group: 'Power', options: ['The Paragon', 'The Berserker', 'The Speedster', 'The Psychic', 'The Sorcerer', 'The Nullifier'] },
@@ -283,7 +299,7 @@ function getSuggestedTrack(toneText) { if (!toneText) return "african"; const t 
 // ═══════════════════════════════════════════════════════════════
 // ADVENTURE: SYSTEM PROMPT BUILDER (condensed)
 // ═══════════════════════════════════════════════════════════════
-function buildSystemPrompt({ playerList, characterChoices, world, tone, duration, continuityMode, priorSessions, hasFamilyContext, playerInventory, playerTraits }) {
+function buildSystemPrompt({ playerList, characterChoices, world, tone, duration, continuityMode, priorSessions, hasFamilyContext, playerInventory, playerTraits, narrativeDensity }) {
   const isSolo = playerList.length === 1;
   const isMulti = playerList.length > 2;
   let prompt = `You are a choose-your-own-adventure storyteller for children. Each response must be ONLY valid JSON, no markdown.\nJSON schema:\n{"narration":"string","turnLabel":"[NAME]'S TURN"|null,"beatType":"action"|"wonder"|"campfire"|"signature"|"closing","choicePrompt":"string"|null,"choices":[{"label":"A","text":"string"}]|null,"achievement":null|{"name":"string","description":"string"},"itemFound":null|{"name":"string","icon":"single emoji","description":"string"},"traitEarned":null|{"player":"playerId","trait":"courage|cleverness|heart|persistence|curiosity|leadership|creativity|honesty|kindness|humor"},"isEnding":false,"closingRitual":null}\n\nWhen isEnding is true, include closingRitual:\n{"walkAways":[{"player":"id","text":"string"}],"secretAchievements":[{"player":"id","name":"string","description":"string"}],"thread":"string","recap":"string","traitsSummary":[{"player":"id","trait":"string"}],"itemsSummary":[{"player":"id","name":"string","icon":"emoji"}],"villainPOV":"3-4 sentences from the villain first person reflecting on the battle they lost"}\n\n`;
@@ -330,6 +346,10 @@ function buildSystemPrompt({ playerList, characterChoices, world, tone, duration
   if (continuityMode === "continue" && priorSessions?.length > 0) {
     prompt += `\nCONTINUITY: Open with 3-sentence cinematic "previously on" recap. Carry forward items, traits, powers. Honor at least one unresolved thread. Use one Story Echo (something from a prior adventure reappears without announcement). Let the world respond to each player's reputation.\nLIVING WORLD RULE: Three echo types: a character remembers, an object returns, or a place has changed. One per session.\nPRIOR SESSIONS:\n`;
     priorSessions.forEach(s => { prompt += `Session: ${s.world} (${s.tone}, ${s.date}). Recap: ${s.recap}\n`; });
+  }
+  if (narrativeDensity) {
+    const ndObj = ADVENTURE_DENSITY.find(n => n.id === narrativeDensity) || ADVENTURE_DENSITY[1];
+    prompt += `\nNARRATIVE DENSITY: ${ndObj.label}. Each beat's narration must be ${ndObj.words} words. ${ndObj.desc}`;
   }
   prompt += `\nCRITICAL: Every beat except closing MUST include a "choices" array with at least 2 options.\nIMPORTANT: Respond with ONLY the JSON object. No markdown. No explanation.`;
   return prompt;
@@ -619,6 +639,7 @@ function GlobalStyles() {
 function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack }) {
   const [screen, setScreen] = useState('tone');
   const [tone, setTone] = useState('');
+  const [battleLength, setBattleLength] = useState('hero'); // scout|hero|champion|legend
   const [battleType, setBattleType] = useState('');
   const [fighterA, setFighterA] = useState('');
   const [fighterB, setFighterB] = useState('');
@@ -661,6 +682,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   const [availableVoices, setAvailableVoices] = useState([]);
   const [battleMusic, setBattleMusic] = useState('arena');
   const [battleReadingLevel, setBattleReadingLevel] = useState(null);
+  const [narrativeDensity, setNarrativeDensity] = useState('quest'); // short|quest|cinematic
   const audioRef = useRef(null);
   const endRef = useRef(null);
 
@@ -671,7 +693,8 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
 
   const finalArena = arena === 'custom' ? customArena : arena;
   const isKids = tone === 'kids_young' || tone === 'kids_older';
-  const maxBeats = getMaxBeats(tone);
+  const blObj = BATTLE_LENGTHS.find(b => b.id === battleLength) || BATTLE_LENGTHS[1];
+  const maxBeats = blObj.max;
   const call = (sys, msgs) => battleApiCall(provider, apiKey, sys, msgs);
 
   const TC = { kids_young: { AC: '#22c55e', ADim: '#22c55e12', ABorder: '#22c55e30' }, kids_older: { AC: '#f59e0b', ADim: '#f59e0b12', ABorder: '#f59e0b30' }, intense: { AC: '#4f8ef7', ADim: '#4f8ef712', ABorder: '#4f8ef730' }, brutal: { AC: '#e03c3c', ADim: '#e03c3c12', ABorder: '#e03c3c30' } };
@@ -732,7 +755,10 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
     const hasTurns = playerA.trim() && playerB.trim();
     const turnLine = hasTurns ? `\nTURN SYSTEM: Two players control the sides. Player "${playerA}" controls Side A. Player "${playerB}" controls Side B. Alternate turns each beat. On each beat, include a "turnLabel" field showing whose turn it is: "${playerA.toUpperCase()}'S TURN" or "${playerB.toUpperCase()}'S TURN". The 4 choices should be actions for THAT player's fighter(s) specifically. Start with Side A.` : '';
     const readLvl = battleReadingLevel === 'ages5-7' ? '\nREADING LEVEL: Ages 5-7. Short simple sentences. Sound words. Concrete language.' : battleReadingLevel === 'ages8-10' ? '\nREADING LEVEL: Ages 8-10. Mixed sentences, richer vocabulary, emotional complexity.' : battleReadingLevel === 'ages11+' ? '\nREADING LEVEL: Ages 11+. Full vocabulary, layered prose, moral weight.' : battleReadingLevel === 'adult' ? '\nREADING LEVEL: Adult. Unrestricted vocabulary and complexity.' : '';
-    const msg = `START THE BATTLE.\nBATTLE TYPE: ${typeDesc}\n${fighterBlock}${wcLine}\nARENA: ${finalArena}\nCONDITIONS: ${weather}\nWIN CONDITION: ${objective}\n${isKids ? `AUDIENCE: kids ${tone === 'kids_young' ? 'ages 6-8' : 'ages 9-12'} , fun and age-appropriate\n` : ''}${turnLine}${readLvl}\nGenerate beat 1. Establish the arena through sensory detail. Introduce all combatants through positioning and first movement.${wcArg ? ' Hint at Wild Card presence ominously.' : ''} Begin the first exchange. Present 4 choices.`;
+    const lengthLine = `\nBATTLE LENGTH: ${blObj.label} (${blObj.min}-${blObj.max} beats). Pace the battle accordingly. ${battleLength === 'scout' ? 'Get to the action fast. Minimal setup.' : battleLength === 'legend' ? 'Take your time. Build tension across many exchanges. Develop the fighters through combat.' : 'Balance setup with action.'}`;
+    const ndObj = NARRATIVE_DENSITY.find(n => n.id === narrativeDensity) || NARRATIVE_DENSITY[1];
+    const densityLine = `\nNARRATIVE DENSITY: ${ndObj.label}. Each beat's narrative section must be ${ndObj.words} words. ${ndObj.desc}`;
+    const msg = `START THE BATTLE.\nBATTLE TYPE: ${typeDesc}\n${fighterBlock}${wcLine}\nARENA: ${finalArena}\nCONDITIONS: ${weather}\nWIN CONDITION: ${objective}\n${isKids ? `AUDIENCE: kids ${tone === 'kids_young' ? 'ages 6-8' : 'ages 9-12'} , fun and age-appropriate\n` : ''}${turnLine}${readLvl}${lengthLine}${densityLine}\nGenerate beat 1. Establish the arena through sensory detail. Introduce all combatants through positioning and first movement.${wcArg ? ' Hint at Wild Card presence ominously.' : ''} Begin the first exchange. Present 4 choices.`;
     if (hasTurns) setCurrentTurn('A');
     const init = [{ role: 'user', content: msg }];
     try {
@@ -793,12 +819,13 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
     const hasTurns = playerA.trim() && playerB.trim();
     const nextTurn = currentTurn === 'A' ? 'B' : 'A';
     const nextPlayer = nextTurn === 'A' ? playerA : playerB;
-    const nn = pn + 1; setBeatCount(nn); const suggestEnd = nn >= maxBeats;
+    const nn = pn + 1; setBeatCount(nn); const inRange = nn >= blObj.min; const pastMax = nn >= blObj.max;
     let instr = `Player chose: "${choice.text}" , ${choice.detail}${choice.id === 4 ? ' [WILDCARD CHOSEN]' : ''}\n\nGenerate beat ${nn}.`;
-    if (hasTurns && !suggestEnd) instr += ` This is ${nextPlayer}'s turn (Side ${nextTurn}). Set turnLabel to "${nextPlayer.toUpperCase()}'S TURN". Choices should be actions for Side ${nextTurn}'s fighter(s).`;
-    if (hasTurns && suggestEnd) instr += ` This is ${nextPlayer}'s turn (Side ${nextTurn}). Set turnLabel to "${nextPlayer.toUpperCase()}'S TURN".`;
-    if (suggestEnd) instr += ' The battle has reached its natural climax. If the story feels resolved, set isComplete to true and deliver the resolution. If not, you may continue for 1-2 more beats but wrap up soon.';
-    else if (nn === maxBeats - 1) instr += ' CLIMAX BEAT: Build toward the decisive moment.';
+    if (hasTurns && !inRange) instr += ` This is ${nextPlayer}'s turn (Side ${nextTurn}). Set turnLabel to "${nextPlayer.toUpperCase()}'S TURN". Choices should be actions for Side ${nextTurn}'s fighter(s).`;
+    if (hasTurns && inRange) instr += ` This is ${nextPlayer}'s turn (Side ${nextTurn}). Set turnLabel to "${nextPlayer.toUpperCase()}'S TURN".`;
+    if (pastMax) instr += ' The battle has gone on long enough. Set isComplete to true. Deliver the decisive resolution now.';
+    else if (inRange) instr += ' The battle is reaching its natural climax. You may end it here with isComplete true, or continue if the story needs 1-2 more beats.';
+    else if (nn === blObj.min - 1) instr += ' CLIMAX BEAT: Build toward the decisive moment.';
     if (hasTurns) setCurrentTurn(nextTurn);
     const nm = [...pm, { role: 'user', content: instr }];
     try {
@@ -818,7 +845,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   const resetBattle = () => {
     audioRef.current?.stop(); audioRef.current = null;
     window.speechSynthesis?.cancel(); setIsSpeaking(false);
-    setScreen('tone'); setTone(''); setBattleType(''); setFighterA(''); setFighterB('');
+    setScreen('tone'); setTone(''); setBattleLength('hero'); setNarrativeDensity('quest'); setBattleType(''); setFighterA(''); setFighterB('');
     setFfaFighters(['', '', '', '']); setTourneyFighters(['', '', '', '', '', '', '', '']);
     setWcEnabled(false); setWc({ name: '', objective: '' }); setArena(''); setCustomArena('');
     setWeather('Clear'); setObjective(''); setBriefing(null); setMessages([]); setBeats([]);
@@ -924,6 +951,34 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
             <Lbl c="READING LEVEL (OPTIONAL)" />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {[{ id: null, l: 'Auto (from tone)' }, { id: 'ages5-7', l: 'Ages 5-7' }, { id: 'ages8-10', l: 'Ages 8-10' }, { id: 'ages11+', l: 'Ages 11+' }, { id: 'adult', l: 'Adult' }].map(r => <div key={r.id || 'auto'} onClick={() => setBattleReadingLevel(r.id)} style={chip(battleReadingLevel === r.id)}>{r.l}</div>)}
+            </div>
+          </div>
+          {/* Battle length */}
+          <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+            <Lbl c="BATTLE LENGTH" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {BATTLE_LENGTHS.map(bl => (
+                <div key={bl.id} onClick={() => setBattleLength(bl.id)} style={{ background: battleLength === bl.id ? `${AC}18` : 'rgba(255,255,255,0.04)', border: `2px solid ${battleLength === bl.id ? AC : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '12px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: battleLength === bl.id ? `0 2px 12px ${AC}30` : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '16px' }}>{bl.icon}</span>
+                    <span style={{ fontFamily: M, fontSize: '14px', fontWeight: '700', color: battleLength === bl.id ? AC : '#c0b8d0' }}>{bl.label}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: battleLength === bl.id ? '#d0c8e0' : '#7a7290', fontFamily: S }}>{bl.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Narrative density */}
+          <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+            <Lbl c="NARRATIVE DENSITY" />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {NARRATIVE_DENSITY.map(nd => (
+                <div key={nd.id} onClick={() => setNarrativeDensity(nd.id)} style={{ flex: 1, background: narrativeDensity === nd.id ? `${AC}18` : 'rgba(255,255,255,0.04)', border: `2px solid ${narrativeDensity === nd.id ? AC : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: narrativeDensity === nd.id ? `0 2px 12px ${AC}30` : 'none' }}>
+                  <span style={{ fontSize: '16px' }}>{nd.icon}</span>
+                  <div style={{ fontFamily: M, fontSize: '13px', fontWeight: '700', color: narrativeDensity === nd.id ? AC : '#c0b8d0', marginTop: '4px' }}>{nd.label}</div>
+                  <div style={{ fontSize: '10px', color: narrativeDensity === nd.id ? '#d0c8e0' : '#7a7290', fontFamily: S, marginTop: '2px' }}>{nd.sub}</div>
+                </div>
+              ))}
             </div>
           </div>
         </>}
@@ -1153,7 +1208,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   }
 
   if (screen === 'story' || screen === 'resolution') {
-    const pct = Math.min((beatCount / maxBeats) * 100, 100);
+    const pct = Math.min((beatCount / blObj.max) * 100, 100);
     const curPhase = currentBeat?.phase || beats[beats.length - 1]?.phase || '';
     const latestNarr = currentBeat?.narrative || null;
     return (
@@ -1164,7 +1219,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
             {latestNarr && !resolution && <button onClick={isSpeaking ? stopSpeaking : () => readAloud(latestNarr)} style={{ background: isSpeaking ? `${AC}20` : 'transparent', border: `1px solid ${isSpeaking ? AC : '#1c1814'}`, borderRadius: '5px', padding: '4px 9px', color: isSpeaking ? AC : '#3d3830', cursor: 'pointer', fontFamily: M, fontSize: '12px' }}>{isSpeaking ? '◼ STOP' : '▶ READ'}</button>}
             <button onClick={toggleAudio} style={{ background: 'transparent', border: `1px solid ${audioOn ? '#2a2520' : '#181410'}`, borderRadius: '5px', padding: '4px 9px', color: audioOn ? '#5a5248' : '#2a2520', cursor: 'pointer', fontFamily: M, fontSize: '12px' }}>{audioOn ? '♪ ON' : '♪ OFF'}</button>
             {curPhase && <span style={{ fontFamily: M, fontSize: '10px', letterSpacing: '3px', color: AC, opacity: 0.6 }}>{PH[curPhase] || curPhase.toUpperCase()}</span>}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '40px', height: '2px', background: '#1a1714', borderRadius: '2px', overflow: 'hidden' }}><div style={{ width: `${pct}%`, height: '100%', background: AC, transition: 'width 0.6s' }} /></div><span style={{ fontFamily: M, fontSize: '10px', color: '#4a4560' }}>{beatCount}/{maxBeats}</span></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '40px', height: '2px', background: '#1a1714', borderRadius: '2px', overflow: 'hidden' }}><div style={{ width: `${pct}%`, height: '100%', background: AC, transition: 'width 0.6s' }} /></div><span style={{ fontFamily: M, fontSize: '10px', color: '#4a4560' }}>{beatCount}/{blObj.max}</span></div>
             <button onClick={resetBattle} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '5px', padding: '3px 9px', color: '#5a5270', cursor: 'pointer', fontFamily: M, fontSize: '12px', letterSpacing: '2px' }}>NEW</button>
           </div>
         </div>
@@ -1243,7 +1298,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
   const [showVillainPOV, setShowVillainPOV] = useState(false);
   const [savedSession, setSavedSession] = useState(() => getLS("momah_active_session"));
 
-  function resumeSaved(s) { setPlayers(s.players); setPlayerList(s.playerList); setCharacterChoices(s.characterChoices); setPlayerColors(s.playerColors || {}); setWorldObj(s.worldObj); setCustomWorld(s.customWorld || ""); setToneObj(s.toneObj); setCustomTone(s.customTone || ""); setDuration(s.duration); setMusicTrack(s.musicTrack || "african"); setMessages(s.messages || []); setBeat(s.beat); setBeatCount(s.beatCount || 0); setIsNewBeat(false); setShowAllText(true); setVisibleParas(999); setMusicActive(true); setPhase("story"); setSavedSession(null); }
+  function resumeSaved(s) { setPlayers(s.players); setPlayerList(s.playerList); setCharacterChoices(s.characterChoices); setPlayerColors(s.playerColors || {}); setWorldObj(s.worldObj); setCustomWorld(s.customWorld || ""); setToneObj(s.toneObj); setCustomTone(s.customTone || ""); setDuration(s.duration); setMusicTrack(s.musicTrack || "african"); setAdvDensity(s.advDensity || "quest"); setMessages(s.messages || []); setBeat(s.beat); setBeatCount(s.beatCount || 0); setIsNewBeat(false); setShowAllText(true); setVisibleParas(999); setMusicActive(true); setPhase("story"); setSavedSession(null); }
   const [worlds, setWorlds] = useState(null);
   const [worldsLoading, setWorldsLoading] = useState(false);
   const [worldObj, setWorldObj] = useState(null);
@@ -1251,6 +1306,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
   const [toneObj, setToneObj] = useState(null);
   const [customTone, setCustomTone] = useState("");
   const [duration, setDuration] = useState(null);
+  const [advDensity, setAdvDensity] = useState('quest');
   const [messages, setMessages] = useState([]);
   const [beat, setBeat] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1305,7 +1361,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     if (loading) return; setLoading(true); setError(null); setLoadingSeconds(0);
     const newMessages = userMsg ? [...messages, { role: "user", content: userMsg }] : messages;
     const priorSessions = continuityMode === "continue" ? getPriorSessions() : [];
-    const sysPrompt = buildSystemPrompt({ playerList, characterChoices, world: worldText, tone: toneText, duration, continuityMode, priorSessions, hasFamilyContext, playerInventory: allInventory, playerTraits: allTraits });
+    const sysPrompt = buildSystemPrompt({ playerList, characterChoices, world: worldText, tone: toneText, duration, continuityMode, priorSessions, hasFamilyContext, playerInventory: allInventory, playerTraits: allTraits, narrativeDensity: advDensity });
     const provObj = PROVIDERS.find(p => p.id === provider);
     try {
       const raw = await callAI(provider, apiKey, provObj.model, newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : newMessages, sysPrompt);
@@ -1314,7 +1370,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
       const updatedMessages = [...newMessages, ...(newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : []), assistantMsg];
       setMessages(updatedMessages); setBeat(parsed); setBeatCount(c => c + 1); setIsNewBeat(true); setShowAllText(false); setVisibleParas(0); SFX.next();
       // Mid-session auto-save
-      setLS("momah_active_session", { players, playerList, characterChoices, playerColors, worldObj, customWorld, toneObj, customTone, duration, musicTrack, messages: updatedMessages, beat: parsed, beatCount: beatCount + 1 });
+      setLS("momah_active_session", { players, playerList, characterChoices, playerColors, worldObj, customWorld, toneObj, customTone, duration, musicTrack, advDensity, messages: updatedMessages, beat: parsed, beatCount: beatCount + 1 });
       if (parsed.achievement) { setToast(parsed.achievement); SFX.achievement(); }
       // Item found
       if (parsed.itemFound) { setToast({ type: "item", ...parsed.itemFound }); SFX.item(); const inv = { ...allInventory }; playerList.forEach(p => { if (!inv[p.id]) inv[p.id] = []; if (!inv[p.id].find(i => i.name === parsed.itemFound.name)) inv[p.id].push({ ...parsed.itemFound, from: worldText, date: new Date().toLocaleDateString() }); }); setAllInventory(inv); setLS("momah_inventory", inv); }
@@ -1334,8 +1390,28 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     setLoading(false);
   }
 
-  function resetToStart() { localStorage.removeItem("momah_active_session"); setPhase("setup_player"); setPlayers(null); setPlayerList([]); setCharacterChoices({}); setPlayerColors({}); setCharSetupIdx(0); setContinuityMode(null); setWorlds(null); setWorldObj(null); setCustomWorld(""); setToneObj(null); setCustomTone(""); setDuration(null); setMessages([]); setBeat(null); setBeatCount(0); setError(null); setShowConfirmReset(false); setShowExport(false); setShowDashboard(false); setMusicActive(false); }
+  function resetToStart() { localStorage.removeItem("momah_active_session"); setPhase("setup_player"); setPlayers(null); setPlayerList([]); setCharacterChoices({}); setPlayerColors({}); setCharSetupIdx(0); setContinuityMode(null); setWorlds(null); setWorldObj(null); setCustomWorld(""); setToneObj(null); setCustomTone(""); setDuration(null); setAdvDensity("quest"); setMessages([]); setBeat(null); setBeatCount(0); setError(null); setShowConfirmReset(false); setShowExport(false); setShowDashboard(false); setMusicActive(false); }
   function startStory() { SFX.begin(); setMusicActive(true); setPhase("story"); sendBeat(null); }
+  function saveRating() { if (sessionRating > 0 && allSessions[0]?.id) { const r = { ...allRatings }; r[allSessions[0].id] = { rating: sessionRating, tags: sessionTags }; setAllRatings(r); setLS("momah_ratings", r); } }
+  function continueThisStory() {
+    // Chapter 2: same world, same players, same tone, same density. Fresh messages with recap context.
+    saveRating();
+    const recap = beat?.closingRitual?.recap || "";
+    const thread = beat?.closingRitual?.thread || "";
+    const villainHint = beat?.closingRitual?.villainPOV || "";
+    setMessages([]); setBeat(null); setBeatCount(0); setIsNewBeat(false); setShowAllText(false); setVisibleParas(0);
+    setPhase("story"); setMusicActive(true); SFX.begin();
+    const chapterPrompt = `CHAPTER 2: Continue the story directly from where we left off.\nPREVIOUSLY: ${recap}\nUNRESOLVED THREAD: ${thread}\n${villainHint ? `VILLAIN'S NEXT MOVE: ${villainHint}` : ''}\nAll players keep their inventory, traits, and reputation. Open with a brief cinematic "time has passed" transition (hours, days, or weeks, your choice). Then launch into a new conflict connected to the unresolved thread. Do NOT repeat the previous story. This is a new chapter.\nBegin now.`;
+    sendBeat(chapterPrompt);
+  }
+  function continueNewSaga() {
+    // New story, same players, new world. Go through world/tone/duration setup with continuity mode on.
+    saveRating();
+    setContinuityMode("continue");
+    setMessages([]); setBeat(null); setBeatCount(0);
+    setWorldObj(null); setCustomWorld(""); setToneObj(null); setCustomTone(""); setDuration(null); setAdvDensity("quest");
+    setPhase("setup_world"); generateWorlds();
+  }
   function speak(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/\n/g, " ")); u.rate = 0.92; u.pitch = 1.05; window.speechSynthesis.speak(u); }
   function stopSpeak() { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); }
 
@@ -1532,7 +1608,19 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, paddingTop: 20 }}>
       <h2 style={{ color: C.gold, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>How long do we have?</h2>
       <div style={{ width: 50, height: 2, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginBottom: 12 }} />
-      {DURATIONS.map(d => { const pct = d.id === "20" ? 33 : d.id === "45" ? 66 : 100; return <button key={d.id} onClick={() => { SFX.select(); setDuration(d.id); }} style={{ background: duration === d.id ? C.green : C.card, border: `1px solid ${duration === d.id ? C.green : C.border}`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.2s" }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ color: C.cream, fontWeight: 700, margin: 0, fontSize: 16 }}>{d.label}</p></div><p style={{ color: duration === d.id ? C.cream : C.textDim, margin: "4px 0 8px", fontSize: 13 }}>{d.sub}</p><div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: duration === d.id ? C.cream : C.gold, borderRadius: 2, transition: "all 0.3s" }} /></div></button>; })}
+      {DURATIONS.map(d => { const pct = d.id === "20" ? 33 : d.id === "45" ? 66 : 100; return <button key={d.id} onClick={() => { SFX.select(); setDuration(d.id); setAdvDensity(d.id === "20" ? "short" : d.id === "60" ? "cinematic" : "quest"); }} style={{ background: duration === d.id ? C.green : C.card, border: `1px solid ${duration === d.id ? C.green : C.border}`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.2s" }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ color: C.cream, fontWeight: 700, margin: 0, fontSize: 16 }}>{d.label}</p></div><p style={{ color: duration === d.id ? C.cream : C.textDim, margin: "4px 0 8px", fontSize: 13 }}>{d.sub}</p><div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: duration === d.id ? C.cream : C.gold, borderRadius: 2, transition: "all 0.3s" }} /></div></button>; })}
+      {duration && <>
+        <p style={{ color: C.gold, fontSize: 12, margin: "12px 0 4px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Narrative Density</p>
+        <div style={{ display: "flex", gap: 8 }}>
+          {ADVENTURE_DENSITY.map(nd => (
+            <button key={nd.id} onClick={() => { SFX.select(); setAdvDensity(nd.id); }} style={{ flex: 1, background: advDensity === nd.id ? "rgba(245,200,66,0.1)" : C.card, border: `1px solid ${advDensity === nd.id ? C.gold : C.border}`, borderRadius: 14, padding: "10px 8px", cursor: "pointer", textAlign: "center", fontFamily: "inherit", transition: "all 0.2s" }}>
+              <span style={{ fontSize: 18 }}>{nd.icon}</span>
+              <p style={{ color: advDensity === nd.id ? C.gold : C.cream, fontWeight: 700, margin: "4px 0 2px", fontSize: 13 }}>{nd.label}</p>
+              <p style={{ color: advDensity === nd.id ? C.creamDim : C.textDim, margin: 0, fontSize: 10, lineHeight: 1.4 }}>{nd.sub}</p>
+            </button>
+          ))}
+        </div>
+      </>}
       <p style={{ color: C.creamDim, fontSize: 14, margin: "12px 0 4px" }}>Ambient music:</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
         {[{ id: "none", label: "None", emoji: "🔇" }, { id: "epic", label: "Drums", emoji: "🥁" }, { id: "spooky", label: "Dark", emoji: "🌲" }, { id: "playful", label: "Bells", emoji: "🔔" }, { id: "warm", label: "Calm", emoji: "🌅" }, { id: "african", label: "Igbo", emoji: "🪘" }].map(m => <button key={m.id} onClick={() => { SFX.select(); setMusicTrack(m.id); }} style={{ background: musicTrack === m.id ? "rgba(245,200,66,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${musicTrack === m.id ? C.gold : C.border}`, borderRadius: 10, padding: "10px 4px", cursor: "pointer", textAlign: "center", fontFamily: "inherit" }}><span style={{ fontSize: 24, display: "block" }}>{m.emoji}</span><span style={{ color: musicTrack === m.id ? C.gold : C.creamDim, fontSize: 10, display: "block", marginTop: 4 }}>{m.label}</span></button>)}
@@ -1570,7 +1658,6 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
   // CLOSING
   if (phase === "closing") {
     const ritual = beat?.closingRitual;
-    const saveRating = () => { if (sessionRating > 0 && allSessions[0]?.id) { const r = { ...allRatings }; r[allSessions[0].id] = { rating: sessionRating, tags: sessionTags }; setAllRatings(r); setLS("momah_ratings", r); } };
     return shell("The End", (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20, paddingTop: 20 }}>
         {beat?.narration && <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20 }}>{beat.narration.split(/\n+/).filter(Boolean).map((p, i) => <p key={i} style={{ color: C.cream, fontSize: 15, lineHeight: 1.7, margin: i === 0 ? 0 : "12px 0 0" }}>{p}</p>)}</div>}
@@ -1584,8 +1671,10 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
           <button onClick={() => { let text = `STORYVERSE AI ADVENTURE\nPlayers: ${playerList.map(p => p.name).join(", ")}\nWorld: ${worldText}\nTone: ${toneText}\nDate: ${new Date().toLocaleDateString()}\n\n`; messages.forEach(m => { if (m.role === "assistant") { try { const b = JSON.parse(m.content.replace(/\`\`\`json\n?/g,"").replace(/\`\`\`\n?/g,"").trim()); text += (b.narration || "") + "\n\n"; } catch { text += m.content + "\n\n"; } } }); if (ritual) { text += "--- THE END ---\n"; (ritual.walkAways || []).forEach(w => { text += `${w.player}: ${w.text}\n`; }); (ritual.secretAchievements || []).forEach(a => { text += `Achievement (${a.player}): ${a.name} - ${a.description}\n`; }); if (ritual.thread) text += `Thread: ${ritual.thread}\n`; if (ritual.villainPOV) text += `\nVillain: ${ritual.villainPOV}\n`; } navigator.clipboard.writeText(text).catch(() => {}); setToast({ name: "Copied!", description: "Story copied to clipboard" }); }} style={{ background: "none", border: `1px solid ${C.gold}40`, color: C.gold, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>📋 Copy Story to Clipboard</button>
           <button onClick={() => { let text = `STORYVERSE AI ADVENTURE\nPlayers: ${playerList.map(p => p.name).join(", ")}\nWorld: ${worldText}\nTone: ${toneText}\nDate: ${new Date().toLocaleDateString()}\n\n`; messages.forEach(m => { if (m.role === "assistant") { try { const b = parseAIJson(m.content); text += (b.narration || "") + "\n\n"; } catch { text += m.content + "\n\n"; } } }); if (ritual) { text += "--- THE END ---\n"; (ritual.walkAways || []).forEach(w => { text += `${w.player}: ${w.text}\n`; }); (ritual.secretAchievements || []).forEach(a => { text += `Achievement (${a.player}): ${a.name} - ${a.description}\n`; }); if (ritual.thread) text += `Thread: ${ritual.thread}\n`; if (ritual.villainPOV) text += `\nVillain: ${ritual.villainPOV}\n`; } const blob = new Blob([text], { type: "text/plain" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `Storyverse_${new Date().toLocaleDateString().replace(/\//g, "-")}.txt`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }} style={{ background: "none", border: `1px solid ${C.green}40`, color: C.greenLight, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>💾 Download Story</button>
-          <PrimaryBtn onClick={() => { saveRating(); resetToStart(); }}>New Adventure</PrimaryBtn>
-          <button onClick={() => { saveRating(); onBack(); }} style={{ background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 15, fontFamily: "inherit" }}>Main Menu</button>
+          <PrimaryBtn onClick={continueThisStory} style={{ background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldDark} 100%)` }}>📖 Continue This Story</PrimaryBtn>
+          <button onClick={continueNewSaga} style={{ background: `linear-gradient(135deg, ${C.green} 0%, #2a8f48 100%)`, color: C.cream, border: "none", borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 15, fontWeight: 600, fontFamily: "inherit" }}>🌍 Continue Your Saga</button>
+          <button onClick={() => { saveRating(); resetToStart(); }} style={{ background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>✨ New Adventure</button>
+          <button onClick={() => { saveRating(); onBack(); }} style={{ background: "none", border: `1px solid ${C.textDim}30`, color: C.textDim, borderRadius: 12, padding: "12px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Main Menu</button>
         </div>
       </div>
     ), false);
@@ -1709,6 +1798,45 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
       completeChallenge("storytime");
     } catch (e) { setError(e.message || "Story generation failed."); }
     setLoading(false);
+  }
+
+  function continueStorytimeStory() {
+    stopSpeak();
+    const prevTitle = story?.title || "";
+    const prevSeed = story?.worldSeed;
+    const contSeed = prevSeed ? { ...prevSeed, title: prevTitle, date: new Date().toLocaleDateString(), sourceMode: "storytime" } : null;
+    const contPrompt = `This is a sequel to "${prevTitle}." Continue from where the previous story ended. Same world, same characters. New conflict, new journey. Honor the unresolved thread.`;
+    // Set state for UI display
+    if (contSeed) setWorldSeed(contSeed);
+    setCustomPrompt(contPrompt);
+    setStory(null); setShowAllText(false); setVisibleParas(0); setSessionRating(0); setSessionTags([]);
+    // Generate with explicit params since state is async
+    (async () => {
+      setLoading(true); setError(null); setLoadingSeconds(0);
+      const age = parseInt(listenerAge) || 7;
+      const readLvl = age <= 7 ? "Simple words, short sentences, sound effects, humor." : age <= 10 ? "Mixed sentence length, richer vocabulary, emotional depth." : "Full vocabulary, moral complexity, layered prose.";
+      const lengthSpec = STORYTIME_LENGTHS.find(l => l.id === storyLength);
+      const seedContext = contSeed ? `\nWORLD CONTEXT (sequel): World: ${contSeed.world}. Tone: ${contSeed.tone}. Thread: ${contSeed.thread || "none"}. Villain: ${contSeed.villain || "unknown"}. Continue in this world. Honor the unresolved thread. This is a direct sequel.\n` : "";
+      const sysPrompt = `You are a master storyteller. Generate a complete, linear story for a child listener. No choices, no interactivity. Just a beautiful story meant to be read aloud.\n\nRespond with ONLY valid JSON, no markdown:\n{"title":"string","content":"the full story with \\n paragraph breaks","mood":"one word mood","worldSeed":{"world":"setting name","tone":"tone","thread":"one sentence unresolved thread for future stories","villain":"villain name or null"}}\n\nThe story must be ${lengthSpec?.words || "800-1000 words"}.\nListener: ${listenerName || "a child"}, age ${age}.\nReading level: ${readLvl}\nGenre: ${genre?.label || "bedtime story"}\nSpecial request: ${contPrompt}\n${seedContext}\nRules:\n- This is a SEQUEL. Same world, same characters, new story arc.\n- Write the full story. Beginning, middle, end.\n- Use sensory language.\n- PACING FOR READ-ALOUD: Shorter sentences in the final third. The final paragraph should feel like exhaling.\n- worldSeed should capture the updated world state for future stories.`;
+      const provObj = PROVIDERS.find(p => p.id === provider);
+      try {
+        const raw = await callAI(provider, apiKey, provObj.model, [{ role: "user", content: "Generate the sequel story now." }], sysPrompt);
+        let parsed;
+        try { parsed = parseAIJson(raw); } catch {
+          const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+          const title = (cleaned.match(/"title"\s*:\s*"([^"]*)"/) || [])[1] || "Untitled Story";
+          const contentMatch = cleaned.match(/"content"\s*:\s*"([\s\S]*?)"\s*,\s*"mood"/);
+          const content = contentMatch ? contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"') : cleaned.length > 100 ? cleaned : null;
+          const mood = (cleaned.match(/"mood"\s*:\s*"([^"]*)"/) || [])[1] || "warm";
+          if (content) parsed = { title, content, mood, worldSeed: { world: title, tone: mood, thread: "", villain: null } };
+          else throw new Error("Could not extract story. Tap retry.");
+        }
+        setStory(parsed); setShowAllText(false); setVisibleParas(0); setMusicActive(true); SFX.begin();
+        if (parsed.worldSeed) saveWorldSeed({ ...parsed.worldSeed, title: parsed.title, date: new Date().toLocaleDateString(), sourceMode: "storytime" });
+        setPhase("reading"); completeChallenge("storytime");
+      } catch (e) { setError(e.message || "Story generation failed."); setPhase("setup"); }
+      setLoading(false);
+    })();
   }
 
   const shell = (title, children, showBackBtn, onBackFn) => (
@@ -1856,8 +1984,9 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <PrimaryBtn onClick={() => { stopSpeak(); setPhase("setup"); setStory(null); setMusicActive(false); setSessionRating(0); setSessionTags([]); setWorldSeed(null); }} style={{ background: "linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)" }}>Another Story</PrimaryBtn>
-              <button onClick={() => { stopSpeak(); onBack(); }} style={{ background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 15, fontFamily: "inherit" }}>Main Menu</button>
+              <PrimaryBtn onClick={continueStorytimeStory} style={{ background: "linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)" }}>📖 Continue This Story</PrimaryBtn>
+              <button onClick={() => { stopSpeak(); setPhase("setup"); setStory(null); setMusicActive(false); setSessionRating(0); setSessionTags([]); setWorldSeed(null); setCustomPrompt(""); }} style={{ background: "none", border: "1px solid rgba(139,92,246,0.4)", color: "#a78bfa", borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 15, fontFamily: "inherit" }}>✨ New Story</button>
+              <button onClick={() => { stopSpeak(); onBack(); }} style={{ background: "none", border: `1px solid ${C.textDim}30`, color: C.textDim, borderRadius: 12, padding: "12px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Main Menu</button>
             </div>
           </div>
         )}
