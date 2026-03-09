@@ -77,7 +77,7 @@ async function callAI(provider, apiKey, model, messages, systemPrompt) {
 async function battleApiCall(provider, apiKey, system, messages) {
   const provObj = PROVIDERS.find(p => p.id === provider);
   let raw = '';
-  const maxTok = 2000;
+  const maxTok = 3000;
   if (provider === 'anthropic') {
     const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: provObj.model, max_tokens: maxTok, system, messages }) });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Claude error ${res.status}`); }
@@ -93,11 +93,43 @@ async function battleApiCall(provider, apiKey, system, messages) {
     const d = await res.json(); raw = d.choices?.[0]?.message?.content || '';
   }
   let clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-  try { return JSON.parse(clean); } catch {}
-  const match = clean.match(/\{[\s\S]*\}/);
+  // Attempt parse with progressive repair
+  function tryParse(s) { try { return JSON.parse(s); } catch { return null; } }
+  let result = tryParse(clean);
+  if (result) return result;
+  const match = clean.match(/\{[\s\S]*\}/) || clean.match(/\{[\s\S]*/);
   if (match) {
-    try { return JSON.parse(match[0]); } catch {}
-    try { return JSON.parse(match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch {}
+    let chunk = match[0];
+    result = tryParse(chunk);
+    if (result) return result;
+    // Fix trailing commas
+    result = tryParse(chunk.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']'));
+    if (result) return result;
+    // Repair truncated JSON: close any open strings, arrays, objects
+    let repair = chunk;
+    // If ends mid-string, close the string
+    const quoteCount = (repair.match(/(?<!\\)"/g) || []).length;
+    if (quoteCount % 2 !== 0) repair += '"';
+    // Close open arrays and objects
+    const opens = (repair.match(/[\[{]/g) || []).length;
+    const closes = (repair.match(/[\]}]/g) || []).length;
+    for (let i = 0; i < opens - closes; i++) {
+      // Determine if we need ] or }
+      const lastOpen = repair.lastIndexOf('{') > repair.lastIndexOf('[') ? '}' : ']';
+      repair += lastOpen;
+    }
+    result = tryParse(repair);
+    if (result) return result;
+    // Brute force: strip everything after last complete value and close
+    const lastGoodComma = repair.lastIndexOf(',"');
+    if (lastGoodComma > 0) {
+      let truncated = repair.substring(0, lastGoodComma);
+      const ob = (truncated.match(/{/g) || []).length;
+      const cb = (truncated.match(/}/g) || []).length;
+      for (let i = 0; i < ob - cb; i++) truncated += '}';
+      result = tryParse(truncated);
+      if (result) return result;
+    }
   }
   throw new Error(`Parse failed. Response start: "${raw.substring(0, 150)}..."`);
 }
