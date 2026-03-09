@@ -34,6 +34,37 @@ const PROVIDERS = [
 // ═══════════════════════════════════════════════════════════════
 // SHARED: AI CALL (works for all providers)
 // ═══════════════════════════════════════════════════════════════
+function parseAIJson(raw) {
+  let clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+  try { return JSON.parse(clean); } catch {}
+  // Fix unescaped newlines/tabs inside strings
+  let inString = false, escaped = false, fixed = '';
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean[i];
+    if (ch === '"' && !escaped) inString = !inString;
+    if (ch === '\\' && !escaped) escaped = true; else escaped = false;
+    if (inString && ch === '\n') fixed += '\\n';
+    else if (inString && ch === '\r') fixed += '';
+    else if (inString && ch === '\t') fixed += '\\t';
+    else fixed += ch;
+  }
+  try { return JSON.parse(fixed); } catch {}
+  const match = fixed.match(/\{[\s\S]*\}/) || fixed.match(/\{[\s\S]*/);
+  if (match) {
+    try { return JSON.parse(match[0]); } catch {}
+    try { return JSON.parse(match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch {}
+    // Repair truncated JSON
+    let repair = match[0];
+    const qc = (repair.match(/(?<!\\)"/g) || []).length;
+    if (qc % 2 !== 0) repair += '"';
+    const opens = (repair.match(/[\[{]/g) || []).length;
+    const closes = (repair.match(/[\]}]/g) || []).length;
+    for (let i = 0; i < opens - closes; i++) repair += repair.lastIndexOf('{') > repair.lastIndexOf('[') ? '}' : ']';
+    try { return JSON.parse(repair); } catch {}
+  }
+  throw new Error(`Parse failed. Response start: "${raw.substring(0, 150)}..."`);
+}
+
 async function callAI(provider, apiKey, model, messages, systemPrompt) {
   if (provider === "anthropic") {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -51,7 +82,7 @@ async function callAI(provider, apiKey, model, messages, systemPrompt) {
     const contents = messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: systemPrompt }] }, contents, generationConfig: { maxOutputTokens: 4096, temperature: 0.9 } }),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: systemPrompt }] }, contents, generationConfig: { maxOutputTokens: 4096, temperature: 0.9, responseMimeType: "application/json" } }),
     });
     if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `Gemini error ${res.status}`); }
     const data = await res.json();
@@ -63,7 +94,7 @@ async function callAI(provider, apiKey, model, messages, systemPrompt) {
   const path = provider === "deepseek" ? "/chat/completions" : "/v1/chat/completions";
   const res = await fetch(`${base}${path}`, {
     method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, max_tokens: 4096, temperature: 0.9, messages: [{ role: "system", content: systemPrompt }, ...messages] }),
+    body: JSON.stringify({ model, max_tokens: 4096, temperature: 0.9, response_format: { type: "json_object" }, messages: [{ role: "system", content: systemPrompt }, ...messages] }),
   });
   if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `${provider} error ${res.status}`); }
   const data = await res.json();
@@ -83,55 +114,16 @@ async function battleApiCall(provider, apiKey, system, messages) {
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Claude error ${res.status}`); }
     const d = await res.json(); raw = d.content?.[0]?.text || '';
   } else if (provider === 'gemini') {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provObj.model}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })), generationConfig: { maxOutputTokens: maxTok } }) });
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provObj.model}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })), generationConfig: { maxOutputTokens: maxTok, responseMimeType: "application/json" } }) });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini error ${res.status}`); }
     const d = await res.json(); raw = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
   } else {
     const ep = { deepseek: 'https://api.deepseek.com/chat/completions', groq: 'https://api.groq.com/openai/v1/chat/completions' };
-    const res = await fetch(ep[provider], { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: provObj.model, max_tokens: maxTok, messages: [{ role: 'system', content: system }, ...messages] }) });
+    const res = await fetch(ep[provider], { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: provObj.model, max_tokens: maxTok, response_format: { type: "json_object" }, messages: [{ role: 'system', content: system }, ...messages] }) });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `${provider} error ${res.status}`); }
     const d = await res.json(); raw = d.choices?.[0]?.message?.content || '';
   }
-  let clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-  // Attempt parse with progressive repair
-  function tryParse(s) { try { return JSON.parse(s); } catch { return null; } }
-  let result = tryParse(clean);
-  if (result) return result;
-  const match = clean.match(/\{[\s\S]*\}/) || clean.match(/\{[\s\S]*/);
-  if (match) {
-    let chunk = match[0];
-    result = tryParse(chunk);
-    if (result) return result;
-    // Fix trailing commas
-    result = tryParse(chunk.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']'));
-    if (result) return result;
-    // Repair truncated JSON: close any open strings, arrays, objects
-    let repair = chunk;
-    // If ends mid-string, close the string
-    const quoteCount = (repair.match(/(?<!\\)"/g) || []).length;
-    if (quoteCount % 2 !== 0) repair += '"';
-    // Close open arrays and objects
-    const opens = (repair.match(/[\[{]/g) || []).length;
-    const closes = (repair.match(/[\]}]/g) || []).length;
-    for (let i = 0; i < opens - closes; i++) {
-      // Determine if we need ] or }
-      const lastOpen = repair.lastIndexOf('{') > repair.lastIndexOf('[') ? '}' : ']';
-      repair += lastOpen;
-    }
-    result = tryParse(repair);
-    if (result) return result;
-    // Brute force: strip everything after last complete value and close
-    const lastGoodComma = repair.lastIndexOf(',"');
-    if (lastGoodComma > 0) {
-      let truncated = repair.substring(0, lastGoodComma);
-      const ob = (truncated.match(/{/g) || []).length;
-      const cb = (truncated.match(/}/g) || []).length;
-      for (let i = 0; i < ob - cb; i++) truncated += '}';
-      result = tryParse(truncated);
-      if (result) return result;
-    }
-  }
-  throw new Error(`Parse failed. Response start: "${raw.substring(0, 150)}..."`);
+  return parseAIJson(raw);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -358,6 +350,66 @@ function ErrorBox({ error, onRetry }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// DAILY CHALLENGE SYSTEM
+// ═══════════════════════════════════════════════════════════════
+function completeChallenge(type) {
+  try {
+    const c = JSON.parse(localStorage.getItem("momah_daily_challenges"));
+    if (c && c.date === new Date().toLocaleDateString()) {
+      if (!c[type]) {
+        c[type] = true;
+        localStorage.setItem("momah_daily_challenges", JSON.stringify(c));
+        let s = parseInt(localStorage.getItem("momah_streaks") || "0");
+        localStorage.setItem("momah_streaks", (s + 1).toString());
+      }
+    }
+  } catch {}
+}
+
+function DailyChallenge() {
+  const [challenges, setChallenges] = useState(null);
+  const [streak, setStreak] = useState(0);
+  useEffect(() => {
+    try {
+      const today = new Date().toLocaleDateString();
+      let c = JSON.parse(localStorage.getItem("momah_daily_challenges"));
+      let s = parseInt(localStorage.getItem("momah_streaks") || "0");
+      if (!c || c.date !== today) {
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+        if (c && c.date === yesterday.toLocaleDateString() && (c.battle || c.adventure || c.storytime)) {} else if (c && c.date !== today) s = 0;
+        c = { date: today, battle: false, adventure: false, storytime: false, tasks: { battle: "Win a battle with Wild Card enabled", adventure: "Find the hidden ending in a 20-minute story", storytime: "Listen to a story with the ocean soundscape" } };
+        localStorage.setItem("momah_daily_challenges", JSON.stringify(c));
+        localStorage.setItem("momah_streaks", s.toString());
+      }
+      setChallenges(c); setStreak(s);
+    } catch {}
+  }, []);
+  if (!challenges) return null;
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 20px", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h3 style={{ color: C.gold, margin: 0, fontSize: 16, fontWeight: 700 }}>Daily Missions</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(245,200,66,0.1)", padding: "4px 10px", borderRadius: 12 }}>
+          <span style={{ fontSize: 14 }}>🔥</span>
+          <span style={{ color: C.gold, fontWeight: 700, fontSize: 13 }}>{streak} Day Streak</span>
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {[{ id: "battle", icon: "⚔️", label: "Battle Arena", task: challenges.tasks.battle, done: challenges.battle },
+          { id: "adventure", icon: "📖", label: "Adventure", task: challenges.tasks.adventure, done: challenges.adventure },
+          { id: "storytime", icon: "🌙", label: "Storytime", task: challenges.tasks.storytime, done: challenges.storytime }
+        ].map(m => (
+          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, opacity: m.done ? 0.5 : 1 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: m.done ? C.green : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{m.done ? "✅" : m.icon}</div>
+            <div style={{ flex: 1 }}><p style={{ color: C.cream, margin: 0, fontSize: 13, fontWeight: 600, textDecoration: m.done ? "line-through" : "none" }}>{m.label}</p><p style={{ color: C.textDim, margin: 0, fontSize: 11 }}>{m.task}</p></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN APP (unified wrapper)
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
@@ -387,10 +439,49 @@ export default function App() {
   // MODE SELECTION SCREEN
   if (phase === "setup_mode" || (phase === "setup_key" && apiKey && apiKey.length > 8 && !appMode)) {
     if (phase === "setup_key") setPhase("setup_mode");
-    const modes = [
-      { id: "adventure", icon: "📖", label: "Choose Your Adventure", sub: "A beat-by-beat story where your choices shape the plot.", accent: "#2d9e52", glow: "rgba(45,158,82,0.18)", border: "rgba(45,158,82,0.3)" },
-      { id: "battle", icon: "⚔️", label: "Battle Arena", sub: "Pit characters against each other with AI-narrated combat.", accent: C.terra, glow: C.terraGlow || "rgba(212,92,26,0.22)", border: "rgba(212,92,26,0.3)" },
-      { id: "storytime", icon: "🌙", label: "Storytime", sub: "A linear, calming story designed to be read aloud at bedtime.", accent: "#8b5cf6", glow: "rgba(139,92,246,0.18)", border: "rgba(139,92,246,0.3)" },
+    return (
+      <div style={{ minHeight: "100vh", background: C.ink, color: C.cream, fontFamily: "'Playfair Display', Georgia, serif", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ maxWidth: 480, width: "100%", padding: "16px 20px", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, minHeight: 40 }}>
+            <span style={{ color: C.textDim, fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>Storyverse AI</span>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {childMode && <span style={{ background: "rgba(30,107,53,0.3)", color: C.greenLight, fontSize: 10, padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>🔒 CHILD</span>}
+              <button onClick={toggleChildMode} style={{ background: "none", border: `1px solid ${childMode ? C.green : C.textDim}`, color: childMode ? C.greenLight : C.creamDim, borderRadius: 8, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{childMode ? "🔒" : "🔓"}</button>
+              <button onClick={() => setShowKeySetup(true)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>🔑</button>
+              <button onClick={() => setMuted(m => !m)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{muted ? "🔇" : "🔊"}</button>
+            </div>
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 48, marginBottom: 8 }}>⚡</div>
+              <h1 style={{ color: C.gold, fontSize: 32, margin: "0 0 6px", fontWeight: 800, letterSpacing: -0.5 }}>Storyverse AI</h1>
+              <p style={{ color: C.creamDim, fontSize: 15, margin: 0, lineHeight: 1.5 }}>What kind of story are we telling today?</p>
+            </div>
+            <DailyChallenge />
+            <button onClick={() => { SFX.select(); setAppMode("battle"); }} style={{ background: "linear-gradient(135deg, rgba(212,92,26,0.12) 0%, rgba(245,200,66,0.08) 100%)", border: "2px solid rgba(212,92,26,0.4)", borderRadius: 16, padding: "24px 20px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s", display: "flex", gap: 16, alignItems: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(212,92,26,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ fontSize: 28 }}>⚔️</span></div>
+              <div><p style={{ color: C.terraLight, fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Battle Arena</p><p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>1v1 duels, team fights, free-for-alls, cinematic battles, and tournaments.</p></div>
+            </button>
+            <button onClick={() => { SFX.select(); setAppMode("adventure"); }} style={{ background: "linear-gradient(135deg, rgba(30,107,53,0.12) 0%, rgba(245,200,66,0.08) 100%)", border: "2px solid rgba(30,107,53,0.4)", borderRadius: 16, padding: "24px 20px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s", display: "flex", gap: 16, alignItems: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(30,107,53,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ fontSize: 28 }}>📖</span></div>
+              <div><p style={{ color: C.greenLight, fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Choose Your Adventure</p><p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>Immersive story worlds with branching choices, character growth, and a closing ritual.</p></div>
+            </button>
+            <button onClick={() => { SFX.select(); setAppMode("storytime"); }} style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(245,200,66,0.08) 100%)", border: "2px solid rgba(139,92,246,0.4)", borderRadius: 16, padding: "24px 20px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s", display: "flex", gap: 16, alignItems: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(139,92,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ fontSize: 28 }}>🌙</span></div>
+              <div><p style={{ color: "#a78bfa", fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Storytime</p><p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>Sit back and listen. No choices, just a beautiful story read aloud.</p></div>
+            </button>
+            <div style={{ textAlign: "center", marginTop: 8 }}>
+              <span style={{ color: C.textDim, fontSize: 11, letterSpacing: 1 }}>Using {PROVIDERS.find(p => p.id === provider)?.label || provider}</span>
+              {parentPin && <button onClick={() => { setPinAction("unlock"); setShowPinSetup(true); }} style={{ display: "block", margin: "8px auto 0", background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 8, padding: "6px 14px", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>📊 Parent Dashboard</button>}
+            </div>
+          </div>
+        </div>
+        {showKeySetup && <KeySetupOverlay provider={provider} setProvider={setProvider} apiKey={apiKey} setApiKey={setApiKey} keyInput={keyInput} setKeyInput={setKeyInput} onClose={() => setShowKeySetup(false)} onSave={(k, p) => { setApiKey(k); setProvider(p); localStorage.setItem("momah_api_key", k); localStorage.setItem("momah_provider", p); setShowKeySetup(false); }} />}
+        {showPinSetup && <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:20}}><div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center"}}><p style={{color:C.gold,fontSize:18,fontWeight:700,margin:"0 0 12px"}}>{pinAction==="set"?"Set Parent PIN":"Enter PIN"}</p><p style={{color:C.creamDim,fontSize:13,margin:"0 0 16px"}}>{pinAction==="set"?"This PIN locks adult content.":"Enter your PIN to disable child mode."}</p><input value={pinInput} onChange={e=>setPinInput(e.target.value.replace(/\D/g,""))} placeholder="4+ digits" type="password" maxLength={8} style={{width:"100%",background:C.ink,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 16px",color:C.cream,fontSize:20,textAlign:"center",letterSpacing:8,boxSizing:"border-box",fontFamily:"monospace",marginBottom:16}}/><div style={{display:"flex",gap:10}}><PrimaryBtn disabled={pinInput.length<4} onClick={handlePinSubmit}>{pinAction==="set"?"Set PIN":"Unlock"}</PrimaryBtn><button onClick={()=>{setShowPinSetup(false);setPinInput("");}} style={{background:"none",border:`1px solid ${C.textDim}`,color:C.creamDim,borderRadius:12,padding:"14px 20px",cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>Cancel</button></div></div></div>}
+        <GlobalStyles />
+      </div>
+    );
+  }
     ];
     return (
       <div style={{ minHeight: "100vh", background: C.ink, color: C.cream, fontFamily: "'Playfair Display', Georgia, serif", overflowX: "hidden", position: "relative" }}>
@@ -423,50 +514,6 @@ export default function App() {
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,200,66,0.09)", border: "1px solid rgba(245,200,66,0.22)", borderRadius: 100, padding: "5px 14px", marginBottom: 36 }}>
               <span style={{ fontSize: 12 }}>✦</span>
               <span style={{ color: C.gold, fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 700 }}>AI-Powered Family Storytelling</span>
-            </div>
-            <h1 style={{ fontSize: "clamp(42px, 8vw, 72px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: -1.5, margin: "0 0 26px", color: C.cream }}>
-              Stories that{" "}<span style={{ background: `linear-gradient(135deg, ${C.gold} 0%, #ffdc7a 40%, ${C.terra} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>grow with you.</span>
-            </h1>
-            <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: "clamp(16px, 2.5vw, 20px)", lineHeight: 1.65, margin: "0 0 48px", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}>An AI-powered storytelling app where your family becomes the heroes.</p>
-            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-              <button onClick={() => { SFX.select(); setAppMode("adventure"); }} style={{ background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldDark} 100%)`, color: "#1a0f00", border: "none", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, fontSize: 16, boxShadow: `0 6px 28px rgba(245,200,66,0.35)`, letterSpacing: 0.2 }}>Start a Story</button>
-              <button onClick={() => setShowKeySetup(true)} style={{ background: "rgba(245,200,66,0.07)", color: C.gold, border: "1px solid rgba(245,200,66,0.28)", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 16, backdropFilter: "blur(8px)" }}>Settings</button>
-            </div>
-          </section>
-
-          {/* Divider */}
-          <div style={{ width: "100%", maxWidth: 640, height: 1, background: "linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.18) 50%, transparent 100%)", marginBottom: 60 }} />
-
-          {/* Feature cards */}
-          <section style={{ width: "100%", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
-            {modes.map(m => (
-              <div key={m.id} onClick={() => { SFX.select(); setAppMode(m.id); }} style={{
-                background: `linear-gradient(160deg, ${C.card} 0%, rgba(10,18,12,1) 100%)`, border: `1px solid ${C.border}`, borderRadius: 20, padding: "30px 26px 28px", cursor: "pointer", transition: "all 0.28s ease", position: "relative", overflow: "hidden",
-                boxShadow: `0 6px 24px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.03) inset`,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.borderColor = m.border; e.currentTarget.style.boxShadow = `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${m.glow}`; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = `0 6px 24px rgba(0,0,0,0.4)`; }}
-              >
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 120, background: `radial-gradient(ellipse 80% 80% at 30% 0%, ${m.glow} 0%, transparent 70%)`, pointerEvents: "none", opacity: 0.5 }} />
-                <div style={{ width: 52, height: 52, borderRadius: 14, background: `${m.accent}28`, border: `1px solid ${m.accent}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 20 }}>{m.icon}</div>
-                <h3 style={{ fontSize: 21, fontWeight: 700, margin: "0 0 10px", color: C.cream, lineHeight: 1.25, letterSpacing: -0.3 }}>{m.label}</h3>
-                <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>{m.sub}</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, color: C.textDim, fontSize: 13, fontWeight: 700, letterSpacing: 0.3 }}><span>Begin</span><span style={{ fontSize: 15 }}>→</span></div>
-              </div>
-            ))}
-          </section>
-
-          {/* Bottom tagline */}
-          <p style={{ marginTop: 64, color: C.textDim, fontSize: 12, letterSpacing: 2, textTransform: "uppercase" }}>Powered by Claude · Built for families</p>
-        </main>
-
-        {showKeySetup && <KeySetupOverlay provider={provider} setProvider={setProvider} apiKey={apiKey} setApiKey={setApiKey} keyInput={keyInput} setKeyInput={setKeyInput} onClose={() => setShowKeySetup(false)} onSave={(k, p) => { setApiKey(k); setProvider(p); localStorage.setItem("momah_api_key", k); localStorage.setItem("momah_provider", p); setShowKeySetup(false); }} />}
-        {showPinSetup && <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:20}}><div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center"}}><p style={{color:C.gold,fontSize:18,fontWeight:700,margin:"0 0 12px"}}>{pinAction==="set"?"Set Parent PIN":"Enter PIN"}</p><p style={{color:C.creamDim,fontSize:13,margin:"0 0 16px"}}>{pinAction==="set"?"This PIN locks adult content.":"Enter your PIN to disable child mode."}</p><input value={pinInput} onChange={e=>setPinInput(e.target.value.replace(/\D/g,""))} placeholder="4+ digits" type="password" maxLength={8} style={{width:"100%",background:C.ink,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 16px",color:C.cream,fontSize:20,textAlign:"center",letterSpacing:8,boxSizing:"border-box",fontFamily:"monospace",marginBottom:16}}/><div style={{display:"flex",gap:10}}><PrimaryBtn disabled={pinInput.length<4} onClick={handlePinSubmit}>{pinAction==="set"?"Set PIN":"Unlock"}</PrimaryBtn><button onClick={()=>{setShowPinSetup(false);setPinInput("");}} style={{background:"none",border:`1px solid ${C.textDim}`,color:C.creamDim,borderRadius:12,padding:"14px 20px",cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>Cancel</button></div></div></div>}
-        <GlobalStyles />
-      </div>
-    );
-  }
-
   if (phase === "setup_key") {
     return <KeySetupScreen provider={provider} setProvider={setProvider} keyInput={keyInput} setKeyInput={setKeyInput} onComplete={(k, p) => { setApiKey(k); setProvider(p); localStorage.setItem("momah_api_key", k); localStorage.setItem("momah_provider", p); setPhase("setup_mode"); }} />;
   }
@@ -766,6 +813,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
       if (beat.isComplete || forceEnd) {
         setBeats([...nb, { narrative: beat.narrative, phase: beat.phase, choiceMade: null }]);
         setResolution(beat); setScreen('resolution');
+        completeChallenge("battle");
         setTimeout(() => audioRef.current?.stop(), 800);
         window.speechSynthesis?.cancel(); setIsSpeaking(false);
       } else { setCurrentBeat(beat); }
@@ -1212,10 +1260,12 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     try {
       const provObj = PROVIDERS.find(p => p.id === provider);
       const raw = await callAI(provider, apiKey, provObj.model, [{ role: "user", content: WORLD_GEN_PROMPT }], "You generate creative story world options for children. Respond only with a valid JSON array, no markdown.");
-      const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
-      const arrMatch = cleaned.match(/\[[\s\S]*\]/);
-      if (!arrMatch) throw new Error("No array found");
-      const parsed = JSON.parse(arrMatch[0]);
+      let parsed;
+      try { parsed = parseAIJson(raw); } catch {
+        const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+        const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+        parsed = arrMatch ? JSON.parse(arrMatch[0]) : null;
+      }
       if (Array.isArray(parsed) && parsed.length >= 5) setWorlds(parsed.slice(0, 5)); else setWorlds(FALLBACK_WORLDS);
     } catch { setWorlds(FALLBACK_WORLDS); }
     setWorldsLoading(false);
@@ -1229,8 +1279,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     const provObj = PROVIDERS.find(p => p.id === provider);
     try {
       const raw = await callAI(provider, apiKey, provObj.model, newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : newMessages, sysPrompt);
-      const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
-      let parsed; try { parsed = JSON.parse(cleaned); } catch { const match = cleaned.match(/\{[\s\S]*\}/); if (match) { try { parsed = JSON.parse(match[0]); } catch { try { parsed = JSON.parse(match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch { throw new Error("AI returned invalid JSON. Tap retry."); } } } else throw new Error("AI returned no JSON. Tap retry."); }
+      let parsed; try { parsed = parseAIJson(raw); } catch (e) { throw new Error("AI returned invalid JSON. Tap retry."); }
       const assistantMsg = { role: "assistant", content: raw };
       const updatedMessages = [...newMessages, ...(newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : []), assistantMsg];
       setMessages(updatedMessages); setBeat(parsed); setBeatCount(c => c + 1); setIsNewBeat(true); setShowAllText(false); setVisibleParas(0); SFX.next();
@@ -1249,6 +1298,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         if (parsed.closingRitual) { saveWorldSeed({ world: worldText, tone: toneText, thread: parsed.closingRitual.thread || "", villain: "", title: worldObj?.title || customWorld || worldText, date: new Date().toLocaleDateString(), sourceMode: "adventure" }); }
         localStorage.removeItem("momah_active_session");
         setPhase("closing"); setSessionRating(0); setSessionTags([]);
+        completeChallenge("adventure");
       }
     } catch (e) { setError(e.message || "Something went wrong."); setRetryPayload(userMsg); }
     setLoading(false);
@@ -1494,6 +1544,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20 }}><p style={{ color: C.gold, fontWeight: 700, fontSize: 14, margin: "0 0 12px", textTransform: "uppercase" }}>Rate this adventure</p><StarRating value={sessionRating} onChange={setSessionRating} /><div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>{TAG_OPTIONS.map(tag => { const on = sessionTags.includes(tag); return <button key={tag} onClick={() => setSessionTags(on ? sessionTags.filter(t => t !== tag) : [...sessionTags, tag])} style={{ background: on ? `${C.gold}20` : "transparent", border: `1px solid ${on ? C.gold : C.textDim}`, color: on ? C.gold : C.creamDim, borderRadius: 20, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>{tag}</button>; })}</div></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
           <button onClick={() => { let text = `STORYVERSE AI ADVENTURE\nPlayers: ${playerList.map(p => p.name).join(", ")}\nWorld: ${worldText}\nTone: ${toneText}\nDate: ${new Date().toLocaleDateString()}\n\n`; messages.forEach(m => { if (m.role === "assistant") { try { const b = JSON.parse(m.content.replace(/\`\`\`json\n?/g,"").replace(/\`\`\`\n?/g,"").trim()); text += (b.narration || "") + "\n\n"; } catch { text += m.content + "\n\n"; } } }); if (ritual) { text += "--- THE END ---\n"; (ritual.walkAways || []).forEach(w => { text += `${w.player}: ${w.text}\n`; }); (ritual.secretAchievements || []).forEach(a => { text += `Achievement (${a.player}): ${a.name} - ${a.description}\n`; }); if (ritual.thread) text += `Thread: ${ritual.thread}\n`; if (ritual.villainPOV) text += `\nVillain: ${ritual.villainPOV}\n`; } navigator.clipboard.writeText(text).catch(() => {}); setToast({ name: "Copied!", description: "Story copied to clipboard" }); }} style={{ background: "none", border: `1px solid ${C.gold}40`, color: C.gold, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>📋 Copy Story to Clipboard</button>
+          <button onClick={() => { let text = `STORYVERSE AI ADVENTURE\nPlayers: ${playerList.map(p => p.name).join(", ")}\nWorld: ${worldText}\nTone: ${toneText}\nDate: ${new Date().toLocaleDateString()}\n\n`; messages.forEach(m => { if (m.role === "assistant") { try { const b = parseAIJson(m.content); text += (b.narration || "") + "\n\n"; } catch { text += m.content + "\n\n"; } } }); if (ritual) { text += "--- THE END ---\n"; (ritual.walkAways || []).forEach(w => { text += `${w.player}: ${w.text}\n`; }); (ritual.secretAchievements || []).forEach(a => { text += `Achievement (${a.player}): ${a.name} - ${a.description}\n`; }); if (ritual.thread) text += `Thread: ${ritual.thread}\n`; if (ritual.villainPOV) text += `\nVillain: ${ritual.villainPOV}\n`; } const blob = new Blob([text], { type: "text/plain" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `Storyverse_${new Date().toLocaleDateString().replace(/\//g, "-")}.txt`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }} style={{ background: "none", border: `1px solid ${C.green}40`, color: C.greenLight, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>💾 Download Story</button>
           <PrimaryBtn onClick={() => { saveRating(); resetToStart(); }}>New Adventure</PrimaryBtn>
           <button onClick={() => { saveRating(); onBack(); }} style={{ background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 15, fontFamily: "inherit" }}>Main Menu</button>
         </div>
@@ -1590,25 +1641,16 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     const provObj = PROVIDERS.find(p => p.id === provider);
     try {
       const raw = await callAI(provider, apiKey, provObj.model, [{ role: "user", content: "Generate the story now." }], sysPrompt);
-      const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
       let parsed;
-      // Try direct parse
-      try { parsed = JSON.parse(cleaned); } catch {
-        // Try extracting JSON object
-        const m = cleaned.match(/\{[\s\S]*\}/);
-        if (m) {
-          try { parsed = JSON.parse(m[0]); } catch {
-            try { parsed = JSON.parse(m[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch {
-              // Last resort: extract fields manually with regex
-              const title = (cleaned.match(/"title"\s*:\s*"([^"]*)"/) || [])[1] || "Untitled Story";
-              const contentMatch = cleaned.match(/"content"\s*:\s*"([\s\S]*?)"\s*,\s*"mood"/);
-              const content = contentMatch ? contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"') : cleaned.length > 100 ? cleaned : null;
-              const mood = (cleaned.match(/"mood"\s*:\s*"([^"]*)"/) || [])[1] || "warm";
-              if (content) { parsed = { title, content, mood, worldSeed: { world: title, tone: mood, thread: "", villain: null } }; }
-              else { throw new Error(`Could not extract story. Raw start: "${cleaned.substring(0, 120)}..."`); }
-            }
-          }
-        } else throw new Error(`No JSON found. Raw start: "${cleaned.substring(0, 120)}..."`);
+      try { parsed = parseAIJson(raw); } catch {
+        // Fallback: extract story fields manually
+        const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+        const title = (cleaned.match(/"title"\s*:\s*"([^"]*)"/) || [])[1] || "Untitled Story";
+        const contentMatch = cleaned.match(/"content"\s*:\s*"([\s\S]*?)"\s*,\s*"mood"/);
+        const content = contentMatch ? contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"') : cleaned.length > 100 ? cleaned : null;
+        const mood = (cleaned.match(/"mood"\s*:\s*"([^"]*)"/) || [])[1] || "warm";
+        if (content) { parsed = { title, content, mood, worldSeed: { world: title, tone: mood, thread: "", villain: null } }; }
+        else { throw new Error("Could not extract story. Tap retry."); }
       }
       setStory(parsed);
       setShowAllText(false); setVisibleParas(0);
@@ -1619,6 +1661,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         saveWorldSeed({ ...parsed.worldSeed, title: parsed.title, date: new Date().toLocaleDateString(), sourceMode: "storytime" });
       }
       setPhase("reading");
+      completeChallenge("storytime");
     } catch (e) { setError(e.message || "Story generation failed."); }
     setLoading(false);
   }
