@@ -386,88 +386,80 @@ export default function App() {
 
   // MODE SELECTION SCREEN
   if (phase === "setup_mode" || (phase === "setup_key" && apiKey && apiKey.length > 8 && !appMode)) {
-    // Ensure we're on the mode screen if key is valid
     if (phase === "setup_key") setPhase("setup_mode");
-
+    const modes = [
+      { id: "adventure", icon: "📖", label: "Choose Your Adventure", sub: "A beat-by-beat story where your choices shape the plot.", accent: "#2d9e52", glow: "rgba(45,158,82,0.18)", border: "rgba(45,158,82,0.3)" },
+      { id: "battle", icon: "⚔️", label: "Battle Arena", sub: "Pit characters against each other with AI-narrated combat.", accent: C.terra, glow: C.terraGlow || "rgba(212,92,26,0.22)", border: "rgba(212,92,26,0.3)" },
+      { id: "storytime", icon: "🌙", label: "Storytime", sub: "A linear, calming story designed to be read aloud at bedtime.", accent: "#8b5cf6", glow: "rgba(139,92,246,0.18)", border: "rgba(139,92,246,0.3)" },
+    ];
     return (
-      <div style={{ minHeight: "100vh", background: C.ink, color: C.cream, fontFamily: "'Playfair Display', Georgia, serif", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ maxWidth: 480, width: "100%", padding: "16px 20px", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-          {/* Top bar */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, minHeight: 40 }}>
-            <span style={{ color: C.textDim, fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>Storyverse AI</span>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {childMode && <span style={{ background: "rgba(30,107,53,0.3)", color: C.greenLight, fontSize: 10, padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>🔒 CHILD</span>}
-              <button onClick={toggleChildMode} style={{ background: "none", border: `1px solid ${childMode ? C.green : C.textDim}`, color: childMode ? C.greenLight : C.creamDim, borderRadius: 8, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{childMode ? "🔒" : "🔓"}</button>
-              <button onClick={() => setShowKeySetup(true)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>🔑</button>
-              <button onClick={() => setMuted(m => !m)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{muted ? "🔇" : "🔊"}</button>
-            </div>
-          </div>
-
-          {/* Hero */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
-            <div style={{ textAlign: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 48, marginBottom: 8 }}>⚡</div>
-              <h1 style={{ color: C.gold, fontSize: 32, margin: "0 0 6px", fontWeight: 800, letterSpacing: -0.5 }}>Storyverse AI</h1>
-              <p style={{ color: C.creamDim, fontSize: 15, margin: 0, lineHeight: 1.5 }}>What kind of story are we telling today?</p>
-            </div>
-
-            {/* Battle Arena Card */}
-            <button onClick={() => { SFX.select(); setAppMode("battle"); setPhase("battle_tone"); }} style={{
-              background: "linear-gradient(135deg, rgba(212,92,26,0.12) 0%, rgba(245,200,66,0.08) 100%)",
-              border: `2px solid rgba(212,92,26,0.4)`, borderRadius: 16, padding: "24px 20px",
-              cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s",
-              display: "flex", gap: 16, alignItems: "center",
-            }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(212,92,26,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 28 }}>⚔️</span>
-              </div>
-              <div>
-                <p style={{ color: C.terraLight, fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Battle Arena</p>
-                <p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>1v1 duels, team fights, free-for-alls, and tournaments. Pick fighters, arenas, and watch the clash unfold with interactive choices.</p>
-              </div>
-            </button>
-
-            {/* Choose Your Adventure Card */}
-            <button onClick={() => { SFX.select(); setAppMode("adventure"); setPhase("adv_setup_player"); }} style={{
-              background: "linear-gradient(135deg, rgba(30,107,53,0.12) 0%, rgba(245,200,66,0.08) 100%)",
-              border: `2px solid rgba(30,107,53,0.4)`, borderRadius: 16, padding: "24px 20px",
-              cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s",
-              display: "flex", gap: 16, alignItems: "center",
-            }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(30,107,53,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 28 }}>📖</span>
-              </div>
-              <div>
-                <p style={{ color: C.greenLight, fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Choose Your Adventure</p>
-                <p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>Immersive story worlds with branching choices, character growth, achievements, and a closing ritual. Built for bedtime and beyond.</p>
-              </div>
-            </button>
-
-            {/* Storytime Card */}
-            <button onClick={() => { SFX.select(); setAppMode("storytime"); setPhase("st_setup"); }} style={{
-              background: "linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(245,200,66,0.08) 100%)",
-              border: "2px solid rgba(139,92,246,0.4)", borderRadius: 16, padding: "24px 20px",
-              cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s",
-              display: "flex", gap: 16, alignItems: "center",
-            }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(139,92,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 28 }}>🌙</span>
-              </div>
-              <div>
-                <p style={{ color: "#a78bfa", fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Storytime</p>
-                <p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>Sit back and listen. Bedtime stories, calming tales, and immersive narration. No choices, just a beautiful story read aloud.</p>
-              </div>
-            </button>
-
-            {/* Provider indicator */}
-            <div style={{ textAlign: "center", marginTop: 8 }}>
-              <span style={{ color: C.textDim, fontSize: 11, letterSpacing: 1 }}>Using {PROVIDERS.find(p => p.id === provider)?.label || provider}</span>
-              {parentPin && <button onClick={() => { setPinAction("unlock"); setShowPinSetup(true); }} style={{ display: "block", margin: "8px auto 0", background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 8, padding: "6px 14px", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>📊 Parent Dashboard</button>}
-            </div>
-          </div>
+      <div style={{ minHeight: "100vh", background: C.ink, color: C.cream, fontFamily: "'Playfair Display', Georgia, serif", overflowX: "hidden", position: "relative" }}>
+        {/* Atmospheric background */}
+        <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+          <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 900, height: 700, background: "radial-gradient(ellipse 60% 55% at 50% 30%, rgba(212,92,26,0.22) 0%, rgba(180,60,10,0.10) 40%, transparent 70%)", filter: "blur(2px)" }} />
+          <div style={{ position: "absolute", top: "22%", left: "50%", transform: "translateX(-50%)", width: 600, height: 300, background: "radial-gradient(ellipse 50% 40% at 50% 50%, rgba(245,200,66,0.09) 0%, transparent 70%)" }} />
+          <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", height: 300, background: "linear-gradient(to top, rgba(5,14,7,0.95) 0%, transparent 100%)" }} />
+          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.025 }}><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch" /><feColorMatrix type="saturate" values="0" /></filter><rect width="100%" height="100%" filter="url(#noise)" /></svg>
         </div>
 
-        {/* Key setup overlay */}
+        {/* Nav bar */}
+        <nav style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(245,200,66,0.08)", background: "rgba(5,14,7,0.7)", backdropFilter: "blur(12px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 22 }}>✦</span>
+            <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 0.3, background: `linear-gradient(90deg, ${C.cream} 0%, ${C.gold} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Storyverse AI</span>
+          </div>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            {childMode && <span style={{ background: "rgba(30,107,53,0.3)", color: "#2d9e52", fontSize: 10, padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>🔒 CHILD</span>}
+            <button onClick={toggleChildMode} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{childMode ? "🔒" : "🔓"}</button>
+            <button onClick={() => setMuted(m => !m)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{muted ? "🔇" : "🔊"}</button>
+            <button onClick={() => setShowKeySetup(true)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>🔑</button>
+          </div>
+        </nav>
+
+        {/* Main content */}
+        <main style={{ position: "relative", zIndex: 5, maxWidth: 1060, margin: "0 auto", padding: "0 24px 80px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {/* Hero section */}
+          <section style={{ textAlign: "center", padding: "100px 24px 70px", maxWidth: 780 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,200,66,0.09)", border: "1px solid rgba(245,200,66,0.22)", borderRadius: 100, padding: "5px 14px", marginBottom: 36 }}>
+              <span style={{ fontSize: 12 }}>✦</span>
+              <span style={{ color: C.gold, fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 700 }}>AI-Powered Family Storytelling</span>
+            </div>
+            <h1 style={{ fontSize: "clamp(42px, 8vw, 72px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: -1.5, margin: "0 0 26px", color: C.cream }}>
+              Stories that{" "}<span style={{ background: `linear-gradient(135deg, ${C.gold} 0%, #ffdc7a 40%, ${C.terra} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>grow with you.</span>
+            </h1>
+            <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: "clamp(16px, 2.5vw, 20px)", lineHeight: 1.65, margin: "0 0 48px", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}>An AI-powered storytelling app where your family becomes the heroes.</p>
+            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+              <button onClick={() => { SFX.select(); setAppMode("adventure"); }} style={{ background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldDark} 100%)`, color: "#1a0f00", border: "none", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, fontSize: 16, boxShadow: `0 6px 28px rgba(245,200,66,0.35)`, letterSpacing: 0.2 }}>Start a Story</button>
+              <button onClick={() => setShowKeySetup(true)} style={{ background: "rgba(245,200,66,0.07)", color: C.gold, border: "1px solid rgba(245,200,66,0.28)", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 16, backdropFilter: "blur(8px)" }}>Settings</button>
+            </div>
+          </section>
+
+          {/* Divider */}
+          <div style={{ width: "100%", maxWidth: 640, height: 1, background: "linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.18) 50%, transparent 100%)", marginBottom: 60 }} />
+
+          {/* Feature cards */}
+          <section style={{ width: "100%", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+            {modes.map(m => (
+              <div key={m.id} onClick={() => { SFX.select(); setAppMode(m.id); }} style={{
+                background: `linear-gradient(160deg, ${C.card} 0%, rgba(10,18,12,1) 100%)`, border: `1px solid ${C.border}`, borderRadius: 20, padding: "30px 26px 28px", cursor: "pointer", transition: "all 0.28s ease", position: "relative", overflow: "hidden",
+                boxShadow: `0 6px 24px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.03) inset`,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.borderColor = m.border; e.currentTarget.style.boxShadow = `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${m.glow}`; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = `0 6px 24px rgba(0,0,0,0.4)`; }}
+              >
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 120, background: `radial-gradient(ellipse 80% 80% at 30% 0%, ${m.glow} 0%, transparent 70%)`, pointerEvents: "none", opacity: 0.5 }} />
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: `${m.accent}28`, border: `1px solid ${m.accent}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 20 }}>{m.icon}</div>
+                <h3 style={{ fontSize: 21, fontWeight: 700, margin: "0 0 10px", color: C.cream, lineHeight: 1.25, letterSpacing: -0.3 }}>{m.label}</h3>
+                <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>{m.sub}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: C.textDim, fontSize: 13, fontWeight: 700, letterSpacing: 0.3 }}><span>Begin</span><span style={{ fontSize: 15 }}>→</span></div>
+              </div>
+            ))}
+          </section>
+
+          {/* Bottom tagline */}
+          <p style={{ marginTop: 64, color: C.textDim, fontSize: 12, letterSpacing: 2, textTransform: "uppercase" }}>Powered by Claude · Built for families</p>
+        </main>
+
         {showKeySetup && <KeySetupOverlay provider={provider} setProvider={setProvider} apiKey={apiKey} setApiKey={setApiKey} keyInput={keyInput} setKeyInput={setKeyInput} onClose={() => setShowKeySetup(false)} onSave={(k, p) => { setApiKey(k); setProvider(p); localStorage.setItem("momah_api_key", k); localStorage.setItem("momah_provider", p); setShowKeySetup(false); }} />}
         {showPinSetup && <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:20}}><div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center"}}><p style={{color:C.gold,fontSize:18,fontWeight:700,margin:"0 0 12px"}}>{pinAction==="set"?"Set Parent PIN":"Enter PIN"}</p><p style={{color:C.creamDim,fontSize:13,margin:"0 0 16px"}}>{pinAction==="set"?"This PIN locks adult content.":"Enter your PIN to disable child mode."}</p><input value={pinInput} onChange={e=>setPinInput(e.target.value.replace(/\D/g,""))} placeholder="4+ digits" type="password" maxLength={8} style={{width:"100%",background:C.ink,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 16px",color:C.cream,fontSize:20,textAlign:"center",letterSpacing:8,boxSizing:"border-box",fontFamily:"monospace",marginBottom:16}}/><div style={{display:"flex",gap:10}}><PrimaryBtn disabled={pinInput.length<4} onClick={handlePinSubmit}>{pinAction==="set"?"Set PIN":"Unlock"}</PrimaryBtn><button onClick={()=>{setShowPinSetup(false);setPinInput("");}} style={{background:"none",border:`1px solid ${C.textDim}`,color:C.creamDim,borderRadius:12,padding:"14px 20px",cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>Cancel</button></div></div></div>}
         <GlobalStyles />
@@ -627,6 +619,14 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   const [forgeResult, setForgeResult] = useState(null);
   const [forgeLoading, setForgeLoading] = useState(false);
   const [forgeError, setForgeError] = useState('');
+  const [playerA, setPlayerA] = useState('');
+  const [playerB, setPlayerB] = useState('');
+  const [currentTurn, setCurrentTurn] = useState('A');
+  const [cinematicStory, setCinematicStory] = useState(null);
+  const [cinematicParas, setCinematicParas] = useState(0);
+  const [showAllCinematic, setShowAllCinematic] = useState(false);
+  const [cinematicFormat, setCinematicFormat] = useState('1v1');
+  const [sessionRating, setSessionRating] = useState(0);
   const audioRef = useRef(null);
   const endRef = useRef(null);
 
@@ -690,7 +690,10 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
     const wcLine = wcArg ? `\nWILD CARD FACTION: ${wcArg.name} , secret objective: ${wcArg.objective || 'undisclosed'}` : '';
     const typeDesc = { '1v1': '1v1 DUEL', 'team': `TEAM BATTLE (${teamSize} per side)`, 'ffa': `FREE FOR ALL (${fighters.length} fighters)`, 'tournament': `TOURNAMENT (${fighters.length} fighters, bracket elimination)` }[battleType] || battleType.toUpperCase();
     const fighterBlock = battleType === '1v1' || battleType === 'team' ? `SIDE A: ${fighters[0]}\nSIDE B: ${fighters[1]}` : `FIGHTERS:\n${fighters.map((f, i) => `${i + 1}. ${f}`).join('\n')}`;
-    const msg = `START THE BATTLE.\nBATTLE TYPE: ${typeDesc}\n${fighterBlock}${wcLine}\nARENA: ${finalArena}\nCONDITIONS: ${weather}\nWIN CONDITION: ${objective}\n${isKids ? `AUDIENCE: kids ${tone === 'kids_young' ? 'ages 6-8' : 'ages 9-12'} , fun and age-appropriate\n` : ''}\nGenerate beat 1. Establish the arena through sensory detail. Introduce all combatants through positioning and first movement.${wcArg ? ' Hint at Wild Card presence ominously.' : ''} Begin the first exchange. Present 4 choices.`;
+    const hasTurns = playerA.trim() && playerB.trim();
+    const turnLine = hasTurns ? `\nTURN SYSTEM: Two players control the sides. Player "${playerA}" controls Side A. Player "${playerB}" controls Side B. Alternate turns each beat. On each beat, include a "turnLabel" field showing whose turn it is: "${playerA.toUpperCase()}'S TURN" or "${playerB.toUpperCase()}'S TURN". The 4 choices should be actions for THAT player's fighter(s) specifically. Start with Side A.` : '';
+    const msg = `START THE BATTLE.\nBATTLE TYPE: ${typeDesc}\n${fighterBlock}${wcLine}\nARENA: ${finalArena}\nCONDITIONS: ${weather}\nWIN CONDITION: ${objective}\n${isKids ? `AUDIENCE: kids ${tone === 'kids_young' ? 'ages 6-8' : 'ages 9-12'} , fun and age-appropriate\n` : ''}${turnLine}\nGenerate beat 1. Establish the arena through sensory detail. Introduce all combatants through positioning and first movement.${wcArg ? ' Hint at Wild Card presence ominously.' : ''} Begin the first exchange. Present 4 choices.`;
+    if (hasTurns) setCurrentTurn('A');
     const init = [{ role: 'user', content: msg }];
     try {
       const beat = await call(getBattleToneSystem(tone), init);
@@ -699,15 +702,63 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
     } catch (e) { setError(e.message); setScreen('briefing'); } finally { setLoading(false); }
   };
 
+  const startCinematic = async () => {
+    audioRef.current?.stop();
+    const aud = startBattleAudio(finalArena); audioRef.current = aud;
+    if (!audioOn && aud) aud.setVol(0);
+    setScreen('cinematic'); setLoading(true); setError(''); setCinematicStory(null); setCinematicParas(0); setShowAllCinematic(false);
+    const fighters = getFighters();
+    const toneNames = { kids_young: 'fun and silly, BOOM CRASH sound words, age 6-8', kids_older: 'cinematic and exciting, real strategy, age 9-12', intense: 'gritty and tactical, high stakes, no gore', brutal: 'forensic, clinical, detached. Terminal report style.' };
+    const toneStyle = toneNames[tone] || 'exciting';
+    const isMultiFighter = cinematicFormat === 'ffa' || cinematicFormat === 'tournament';
+    const isTeamCinematic = cinematicFormat === 'team';
+    const allFighters = isMultiFighter ? (cinematicFormat === 'ffa' ? ffaFighters : tourneyFighters).filter(f => f.trim()) : [fighterA, fighterB].filter(f => f.trim());
+    const fighterBlock = isMultiFighter
+      ? `FIGHTERS (${allFighters.length}-${cinematicFormat === 'tournament' ? 'fighter tournament bracket' : 'way free-for-all'}):\n${allFighters.map((f, i) => `${i + 1}. ${f}`).join('\n')}`
+      : isTeamCinematic
+        ? `TEAM A (${teamSize} fighters): ${fighterA}\nTEAM B (${teamSize} fighters): ${fighterB}`
+        : `SIDE A: ${fighterA}\nSIDE B: ${fighterB}`;
+    const multiRules = isMultiFighter
+      ? `\n- This is a ${allFighters.length}-fighter ${cinematicFormat === 'tournament' ? 'tournament. Write each round of the bracket. Show each matchup as a mini-battle. Build toward the final.' : 'free-for-all. Every fighter acts independently. Alliances can form and break. Eliminate fighters one by one until one remains.'}\n- Give every fighter at least one moment of brilliance before they fall.`
+      : isTeamCinematic
+        ? `\n- This is a team battle. Each side has ${teamSize} fighters working together. Show coordination, teamwork, and individual moments. Eliminate fighters from each side until one team prevails.`
+        : '';
+    const wcArg = wcEnabled && wc.name ? wc : null;
+    const wcLine = wcArg ? `\nWILD CARD: ${wcArg.name} with secret objective: ${wcArg.objective || 'undisclosed'}. They intervene at a pivotal moment.` : '';
+    const sysPrompt = `You are a master battle storyteller. Write a COMPLETE battle story from start to finish. No choices, no interactivity. Just a cinematic battle narrative meant to be read aloud.\n\nTone: ${toneStyle}\n\nRespond with ONLY valid JSON, no markdown:\n{"title":"string","content":"the full battle story with \\n paragraph breaks","winner":"name of victor","summary":"one sentence outcome"}\n\nRules:\n- Write the FULL battle. Opening, exchanges, turning point, climax, decisive ending.\n- ${tone === 'kids_young' ? '600-800 words. Fun sound effects. Heart wins over power.' : tone === 'kids_older' ? '800-1200 words. Tactical detail. Consequences feel real.' : tone === 'intense' ? '1000-1500 words. Gritty detail. Injuries affect performance. Fear and strategy.' : '1000-1500 words. Forensic observation. No glory. Document the dissolution.'}\n- Use sensory language: sounds, smells, textures, the weight of weapons, the feel of impact.\n- Injuries matter. Fatigue matters. The environment is a weapon.\n- The outcome must feel earned, not random. The winner wins because of something specific they did.\n- End with a clear victor and aftermath.${multiRules}`;
+    const msg = `Write the complete battle.\n${fighterBlock}${wcLine}\nARENA: ${finalArena}\nCONDITIONS: ${weather}\nWIN CONDITION: ${objective}`;
+    try {
+      const raw = await callAI(provider, apiKey, PROVIDERS.find(p => p.id === provider).model, [{ role: 'user', content: msg }], sysPrompt);
+      const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+      let parsed;
+      try { parsed = JSON.parse(cleaned); } catch {
+        const m = cleaned.match(/\{[\s\S]*\}/);
+        if (m) { try { parsed = JSON.parse(m[0]); } catch { parsed = { title: 'The Battle', content: cleaned.length > 100 ? cleaned : 'Story generation failed.', winner: '?', summary: '' }; } }
+        else { parsed = { title: 'The Battle', content: cleaned.length > 100 ? cleaned : 'Story generation failed.', winner: '?', summary: '' }; }
+      }
+      setCinematicStory(parsed);
+      // Save world seed from cinematic battle
+      saveWorldSeed({ world: finalArena, tone: toneStyle, thread: parsed.summary || '', villain: parsed.winner || '', title: parsed.title || 'Battle', date: new Date().toLocaleDateString(), sourceMode: 'battle' });
+    } catch (e) { setError(e.message); setScreen('briefing'); } finally { setLoading(false); }
+  };
+
+  // Cinematic typewriter
+  useEffect(() => { if (!cinematicStory || showAllCinematic) return; const paras = cinematicStory.content.split(/\n+/).filter(Boolean); setCinematicParas(0); let i = 0; const iv = setInterval(() => { i++; if (i >= paras.length) clearInterval(iv); setCinematicParas(i + 1); }, 1200); return () => clearInterval(iv); }, [cinematicStory, showAllCinematic]);
+
   const handleChoice = async (choice) => {
     if (!currentBeat || loading) return;
     const pb = beats, pc = currentBeat, pm = messages, pn = beatCount;
     const nb = [...pb, { narrative: pc.narrative, phase: pc.phase, choiceMade: choice.text, wasWildcard: choice.id === 4 }];
     setBeats(nb); setCurrentBeat(null); setLoading(true); setError('');
+    const hasTurns = playerA.trim() && playerB.trim();
+    const nextTurn = currentTurn === 'A' ? 'B' : 'A';
+    const nextPlayer = nextTurn === 'A' ? playerA : playerB;
     const nn = pn + 1; setBeatCount(nn); const forceEnd = nn >= maxBeats;
     let instr = `Player chose: "${choice.text}" , ${choice.detail}${choice.id === 4 ? ' [WILDCARD CHOSEN]' : ''}\n\nGenerate beat ${nn}.`;
+    if (hasTurns && !forceEnd) instr += ` This is ${nextPlayer}'s turn (Side ${nextTurn}). Set turnLabel to "${nextPlayer.toUpperCase()}'S TURN". Choices should be actions for Side ${nextTurn}'s fighter(s).`;
     if (forceEnd) instr += ' FINAL BEAT: Set isComplete to true. Deliver decisive resolution.';
     else if (nn === maxBeats - 1) instr += ' CLIMAX BEAT: Maximum tension.';
+    if (hasTurns) setCurrentTurn(nextTurn);
     const nm = [...pm, { role: 'user', content: instr }];
     try {
       const beat = await call(getBattleToneSystem(tone), nm);
@@ -824,7 +875,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
       <div style={{ textAlign: 'center', maxWidth: '560px', width: '100%' }}>
         <Ey c="BATTLE FORMAT" /><H1 c="How do they fight?" /><Sub c="STRUCTURE SHAPES EVERYTHING" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-          {[{ id: '1v1', lbl: '1 vs 1', icon: '⚔️', desc: 'Pure duel. One on one.' }, { id: 'team', lbl: 'Teams', icon: '🛡️', desc: '2-4 fighters per side.' }, { id: 'ffa', lbl: 'Free For All', icon: '💥', desc: '3-8 fighters. Chaos.' }, { id: 'tournament', lbl: 'Tournament', icon: '🏆', desc: '4-8 fighters, bracket.' }].map(t => (
+          {[{ id: '1v1', lbl: '1 vs 1', icon: '⚔️', desc: 'Pure duel. One on one.' }, { id: 'team', lbl: 'Teams', icon: '🛡️', desc: '2-4 fighters per side.' }, { id: 'ffa', lbl: 'Free For All', icon: '💥', desc: '3-8 fighters. Chaos.' }, { id: 'tournament', lbl: 'Tournament', icon: '🏆', desc: '4-8 fighters, bracket.' }, { id: 'cinematic', lbl: 'Cinematic', icon: '🎬', desc: 'No choices. Watch it unfold.' }].map(t => (
             <div key={t.id} onClick={() => setBattleType(t.id)} style={{ ...crd(battleType === t.id), textAlign: 'center', padding: '24px 16px' }}>
               <div style={{ fontSize: '40px', marginBottom: '10px' }}>{t.icon}</div>
               <div style={{ fontFamily: M, fontSize: '16px', fontWeight: '700', color: battleType === t.id ? AC : '#c0b8d0', marginBottom: '6px', letterSpacing: '0.5px' }}>{t.lbl}</div>
@@ -841,30 +892,57 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
 
   // FIGHTERS
   if (screen === 'fighters') {
-    const is1v1 = battleType === '1v1', isTeam = battleType === 'team', isFFA = battleType === 'ffa', isTourney = battleType === 'tournament';
-    const slots = isFFA ? ffaFighters : isTourney ? tourneyFighters : null;
-    const setSlots = isFFA ? setFfaFighters : setTourneyFighters;
-    const minSlots = isFFA ? 3 : 4, maxSlots = 8;
-    const activeSlots = slots ? slots.filter(f => f.trim()).length : 0;
-    const ready = (is1v1 || isTeam) ? (fighterA.trim() && fighterB.trim()) : slots && slots.filter(f => f.trim()).length >= minSlots;
-    const showWC = !isKids && !isFFA && !isTourney;
+    const isCinematic = battleType === 'cinematic', is1v1 = battleType === '1v1', isTeam = battleType === 'team', isFFA = battleType === 'ffa', isTourney = battleType === 'tournament';
+    // For cinematic, determine layout from cinematicFormat
+    const effectiveType = isCinematic ? cinematicFormat : battleType;
+    const showDuel = effectiveType === '1v1' || effectiveType === 'team';
+    const showSlots = effectiveType === 'ffa' || effectiveType === 'tournament';
+    const slots = showSlots ? (effectiveType === 'ffa' ? ffaFighters : tourneyFighters) : null;
+    const setSlots = showSlots ? (effectiveType === 'ffa' ? setFfaFighters : setTourneyFighters) : null;
+    const minSlots = effectiveType === 'ffa' ? 3 : 4;
+    const ready = showDuel ? (fighterA.trim() && fighterB.trim()) : slots && slots.filter(f => f.trim()).length >= minSlots;
+    const showWC = !isKids && (effectiveType === '1v1' || effectiveType === 'team');
     return (
       <div style={page}>
         {forgeOpen && <ForgeModal />}
         <div style={{ textAlign: 'center', maxWidth: '540px', width: '100%' }}>
           <Ey c="THE COMBATANTS" /><H1 c="Name Your Fighters" /><Sub c="BE SPECIFIC" />
-          {(is1v1 || isTeam) && (
-            <div style={{ textAlign: 'left', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}><Lbl c={isTeam ? `TEAM A (${teamSize})` : 'FIGHTER A'} />{!isKids && <button onClick={() => openForge(0)} style={{ background: 'transparent', border: `1px solid ${ABorder}`, borderRadius: '4px', padding: '3px 9px', color: AC, cursor: 'pointer', fontFamily: M, fontSize: '12px', letterSpacing: '2px' }}>+ FORGE</button>}</div>
-              <input value={fighterA} onChange={e => setFighterA(e.target.value)} placeholder={isTeam ? 'e.g. Thor, Iron Man' : 'e.g. Achilles'} style={inp} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', margin: '14px 0' }}><div style={{ flex: 1, height: '1px', background: '#181410' }} /><div style={{ fontFamily: M, fontSize: '11px', fontWeight: '700', color: AC, letterSpacing: '3px' }}>VS</div><div style={{ flex: 1, height: '1px', background: '#181410' }} /></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}><Lbl c={isTeam ? `TEAM B (${teamSize})` : 'FIGHTER B'} />{!isKids && <button onClick={() => openForge(1)} style={{ background: 'transparent', border: `1px solid ${ABorder}`, borderRadius: '4px', padding: '3px 9px', color: AC, cursor: 'pointer', fontFamily: M, fontSize: '12px', letterSpacing: '2px' }}>+ FORGE</button>}</div>
-              <input value={fighterB} onChange={e => setFighterB(e.target.value)} placeholder={isTeam ? 'e.g. Thanos, Ebony Maw' : 'e.g. Hector'} style={inp} />
+          {isCinematic && (
+            <div style={{ marginBottom: '20px' }}>
+              <Lbl c="HOW MANY FIGHT?" />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '8px' }}>
+                {[{ id: '1v1', l: '⚔️ 1 vs 1' }, { id: 'team', l: '🛡️ Teams' }, { id: 'ffa', l: '💥 Multi (3-8)' }, { id: 'tournament', l: '🏆 Tournament' }].map(f => (
+                  <button key={f.id} onClick={() => setCinematicFormat(f.id)} style={{ background: cinematicFormat === f.id ? `${AC}20` : 'rgba(255,255,255,0.04)', border: `2px solid ${cinematicFormat === f.id ? AC : 'rgba(255,255,255,0.1)'}`, borderRadius: '10px', padding: '10px 20px', cursor: 'pointer', fontFamily: M, fontSize: '14px', fontWeight: '700', color: cinematicFormat === f.id ? AC : '#9990a8' }}>{f.l}</button>
+                ))}
+              </div>
             </div>
           )}
-          {(isFFA || isTourney) && (
+          {isCinematic && cinematicFormat === 'team' && (
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+              <Lbl c="FIGHTERS PER SIDE" />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>{[2, 3, 4].map(n => <div key={n} onClick={() => setTeamSize(n)} style={{ background: teamSize === n ? `${AC}20` : 'rgba(255,255,255,0.04)', border: `2px solid ${teamSize === n ? AC : 'rgba(255,255,255,0.1)'}`, borderRadius: '10px', padding: '10px 24px', cursor: 'pointer', fontFamily: M, fontSize: '16px', fontWeight: '700', color: teamSize === n ? AC : '#9990a8' }}>{n}</div>)}</div>
+            </div>
+          )}
+          {showDuel && (
             <div style={{ textAlign: 'left', marginBottom: '16px' }}>
-              {slots.map((f, i) => <div key={i} style={{ marginBottom: '8px', display: 'flex', gap: '7px', alignItems: 'center' }}><div style={{ fontFamily: M, fontSize: '13px', color: f.trim() ? AC : '#252118', width: '18px', flexShrink: 0 }}>{i + 1}.</div><input value={f} onChange={e => { const n = [...slots]; n[i] = e.target.value; setSlots(n); }} placeholder={`Fighter ${i + 1}${i < minSlots ? ' (required)' : ''}`} style={{ ...inp, borderColor: f.trim() ? ABorder : '#221e1a' }} />{!isKids && <button onClick={() => openForge(i)} style={{ background: 'transparent', border: `1px solid ${ABorder}`, borderRadius: '4px', padding: '6px 9px', color: AC, cursor: 'pointer', fontFamily: M, fontSize: '12px', flexShrink: 0 }}>⚡</button>}</div>)}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}><Lbl c={isTeam ? `TEAM A (${teamSize})` : 'FIGHTER A'} />{!isKids && !isCinematic && <button onClick={() => openForge(0)} style={{ background: 'transparent', border: `1px solid ${ABorder}`, borderRadius: '4px', padding: '3px 9px', color: AC, cursor: 'pointer', fontFamily: M, fontSize: '12px', letterSpacing: '2px' }}>+ FORGE</button>}</div>
+              <input value={fighterA} onChange={e => setFighterA(e.target.value)} placeholder={isTeam ? 'e.g. Thor, Iron Man' : 'e.g. Achilles'} style={inp} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', margin: '14px 0' }}><div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} /><div style={{ fontFamily: M, fontSize: '11px', fontWeight: '700', color: AC, letterSpacing: '3px' }}>VS</div><div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} /></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}><Lbl c={isTeam ? `TEAM B (${teamSize})` : 'FIGHTER B'} />{!isKids && !isCinematic && <button onClick={() => openForge(1)} style={{ background: 'transparent', border: `1px solid ${ABorder}`, borderRadius: '4px', padding: '3px 9px', color: AC, cursor: 'pointer', fontFamily: M, fontSize: '12px', letterSpacing: '2px' }}>+ FORGE</button>}</div>
+              <input value={fighterB} onChange={e => setFighterB(e.target.value)} placeholder={isTeam ? 'e.g. Thanos, Ebony Maw' : 'e.g. Hector'} style={inp} />
+              {!isCinematic && <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px' }}>
+                <Lbl c="WHO CONTROLS EACH SIDE?" />
+                <p style={{ color: '#7a7290', fontSize: '12px', margin: '0 0 12px', fontFamily: S }}>Leave blank for AI-narrated (no turns). Enter names to take turns choosing for your fighter.</p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}><div style={{ color: AC, fontSize: '11px', fontWeight: '700', marginBottom: '4px', fontFamily: M }}>SIDE A</div><input value={playerA} onChange={e => setPlayerA(e.target.value)} placeholder="e.g. Dad" style={{ ...inp, padding: '8px 12px', fontSize: '14px' }} /></div>
+                  <div style={{ flex: 1 }}><div style={{ color: AC, fontSize: '11px', fontWeight: '700', marginBottom: '4px', fontFamily: M }}>SIDE B</div><input value={playerB} onChange={e => setPlayerB(e.target.value)} placeholder="e.g. Nathaniel" style={{ ...inp, padding: '8px 12px', fontSize: '14px' }} /></div>
+                </div>
+              </div>}
+            </div>
+          )}
+          {showSlots && (
+            <div style={{ textAlign: 'left', marginBottom: '16px' }}>
+              {slots.map((f, i) => <div key={i} style={{ marginBottom: '8px', display: 'flex', gap: '7px', alignItems: 'center' }}><div style={{ fontFamily: M, fontSize: '13px', color: f.trim() ? AC : '#252118', width: '18px', flexShrink: 0 }}>{i + 1}.</div><input value={f} onChange={e => { const n = [...slots]; n[i] = e.target.value; setSlots(n); }} placeholder={`Fighter ${i + 1}${i < minSlots ? ' (required)' : ''}`} style={{ ...inp, borderColor: f.trim() ? ABorder : 'rgba(255,255,255,0.12)' }} /></div>)}
             </div>
           )}
           {showWC && (
@@ -940,13 +1018,62 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
           </div>
         )}
         {error && <div style={{ color: '#f07070', fontFamily: M, fontSize: '13px', marginBottom: '10px' }}>{error}</div>}
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}><BK onClick={() => setScreen('objective')} /><PB on={!loading} onClick={startBattle} sx={{ padding: '12px 48px', fontSize: '10px', letterSpacing: '4px' }}>BEGIN</PB></div>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}><BK onClick={() => setScreen('objective')} /><PB on={!loading} onClick={battleType === 'cinematic' ? startCinematic : startBattle} sx={{ padding: '12px 48px', fontSize: '10px', letterSpacing: '4px' }}>{battleType === 'cinematic' ? 'WATCH' : 'BEGIN'}</PB></div>
       </div>
       <GlobalStyles />
     </div>
   );
 
   // STORY + RESOLUTION
+  // CINEMATIC SCREEN
+  if (screen === 'cinematic') {
+    const paras = cinematicStory ? cinematicStory.content.split(/\n+/).filter(Boolean) : [];
+    const allRevealed = showAllCinematic || cinematicParas >= paras.length;
+    return (
+      <div style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0f0818 100%)', minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: S, color: '#e0d8f0' }}>
+        <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontFamily: M, fontSize: '11px', color: AC, letterSpacing: '1px', fontWeight: 700 }}>🎬 CINEMATIC</div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {cinematicStory && !allRevealed && <button onClick={() => setShowAllCinematic(true)} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '4px 10px', color: '#9990a8', cursor: 'pointer', fontSize: '11px', fontFamily: M }}>SKIP</button>}
+            {allRevealed && <button onClick={() => { const text = paras.join(' '); if (isSpeaking) stopSpeaking(); else readAloud(text); }} style={{ background: isSpeaking ? `${AC}20` : 'rgba(255,255,255,0.06)', border: `1px solid ${isSpeaking ? AC : 'rgba(255,255,255,0.12)'}`, borderRadius: '6px', padding: '4px 10px', color: isSpeaking ? AC : '#9990a8', cursor: 'pointer', fontSize: '11px', fontFamily: M }}>{isSpeaking ? '◼ STOP' : '▶ READ'}</button>}
+            <button onClick={toggleAudio} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '4px 10px', color: '#9990a8', cursor: 'pointer', fontSize: '11px', fontFamily: M }}>{audioOn ? '♪ ON' : '♪ OFF'}</button>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflow: 'auto', padding: '24px 20px' }}>
+          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+            {loading && <div style={{ textAlign: 'center', padding: '60px 0' }}><div style={{ width: 38, height: 38, borderRadius: '50%', border: `3px solid rgba(255,255,255,0.1)`, borderTopColor: AC, animation: 'spin 0.9s linear infinite', margin: '0 auto' }} /><p style={{ color: AC, marginTop: 16, fontSize: 15, fontStyle: 'italic', fontFamily: M }}>Generating battle...</p></div>}
+            {cinematicStory && <>
+              <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+                <div style={{ fontSize: '28px', fontWeight: '700', fontFamily: S, color: '#fff', marginBottom: '6px' }}>{cinematicStory.title}</div>
+                <div style={{ fontSize: '13px', color: '#7a7290', fontFamily: M }}>{cinematicFormat === 'ffa' || cinematicFormat === 'tournament' ? (cinematicFormat === 'ffa' ? ffaFighters : tourneyFighters).filter(f => f.trim()).join(' vs ') : `${fighterA} vs ${fighterB}`} · {finalArena}</div>
+              </div>
+              <div style={{ lineHeight: 2, fontSize: '16px', color: '#d0c8e0', fontFamily: S }}>
+                {paras.slice(0, showAllCinematic ? paras.length : cinematicParas).map((p, i) => <p key={i} style={{ margin: '0 0 16px', animation: !showAllCinematic && i === cinematicParas - 1 ? 'fadeUp 0.5s ease-out' : 'none' }}>{p}</p>)}
+              </div>
+              {allRevealed && <>
+                <div style={{ textAlign: 'center', margin: '32px 0', opacity: 0.4 }}>
+                  <div style={{ width: '60px', height: '1px', background: AC, margin: '0 auto' }} />
+                </div>
+                {cinematicStory.winner && <div style={{ textAlign: 'center', marginBottom: '20px' }}><div style={{ fontFamily: M, fontSize: '12px', color: AC, letterSpacing: '2px', marginBottom: '6px' }}>VICTOR</div><div style={{ fontSize: '24px', fontWeight: '700', fontFamily: S, color: '#fff' }}>{cinematicStory.winner}</div>{cinematicStory.summary && <p style={{ color: '#7a7290', fontSize: '14px', marginTop: '8px', fontFamily: S }}>{cinematicStory.summary}</p>}</div>}
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', marginBottom: '16px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: M, fontSize: '11px', color: '#7a7290', letterSpacing: '1px', marginBottom: '8px' }}>RATE THIS BATTLE</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>{[1,2,3,4,5].map(s => <span key={s} onClick={() => setSessionRating(s)} style={{ fontSize: '24px', cursor: 'pointer', opacity: s <= sessionRating ? 1 : 0.25 }}>⭐</span>)}</div>
+                </div>
+                <button onClick={() => { const text = `${cinematicStory.title}\n${fighterA || ''} vs ${fighterB || ''}\nArena: ${finalArena}\n\n${cinematicStory.content}\n\nVictor: ${cinematicStory.winner || '?'}\n${cinematicStory.summary || ''}`; navigator.clipboard?.writeText(text); }} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px', color: '#9990a8', cursor: 'pointer', fontFamily: M, fontSize: '13px', marginBottom: '12px' }}>📋 Copy Battle to Clipboard</button>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '8px' }}>
+                  <BK onClick={resetBattle} />
+                  <PB on={true} onClick={() => { setCinematicStory(null); setSessionRating(0); startCinematic(); }}>REMATCH</PB>
+                </div>
+              </>}
+            </>}
+            {error && <div style={{ color: '#f07070', fontFamily: M, fontSize: '13px', textAlign: 'center', marginTop: '20px' }}>{error}</div>}
+          </div>
+        </div>
+        <GlobalStyles />
+      </div>
+    );
+  }
+
   if (screen === 'story' || screen === 'resolution') {
     const pct = Math.min((beatCount / maxBeats) * 100, 100);
     const curPhase = currentBeat?.phase || beats[beats.length - 1]?.phase || '';
@@ -991,7 +1118,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
         {currentBeat && !loading && !resolution && currentBeat.choices && (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(10,10,26,0.95)', padding: '12px 18px', flexShrink: 0 }}>
             <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-              <div style={{ fontFamily: M, fontSize: '10px', letterSpacing: '2px', color: '#4a4560', marginBottom: '7px' }}>YOUR MOVE</div>
+              {(() => { const hasTurns = playerA.trim() && playerB.trim(); const turnPlayer = currentTurn === 'A' ? playerA : playerB; const turnFighter = currentTurn === 'A' ? fighterA : fighterB; const turnLabel = currentBeat?.turnLabel; return hasTurns ? (<div style={{ marginBottom: '10px' }}><div style={{ fontFamily: M, fontSize: '14px', fontWeight: '700', letterSpacing: '1px', color: currentTurn === 'A' ? '#22c55e' : '#f59e0b', marginBottom: '2px' }}>{turnLabel || `${turnPlayer.toUpperCase()}'S TURN`}</div><div style={{ fontFamily: S, fontSize: '12px', color: '#7a7290' }}>Choose for {turnFighter || `Side ${currentTurn}`}</div></div>) : (<div style={{ fontFamily: M, fontSize: '10px', letterSpacing: '2px', color: '#4a4560', marginBottom: '7px' }}>YOUR MOVE</div>); })()}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {currentBeat.choices.map(ch => {
                   const isWC = ch.id === 4;
