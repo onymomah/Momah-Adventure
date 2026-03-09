@@ -92,7 +92,7 @@ async function battleApiCall(provider, apiKey, system, messages) {
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `${provider} error ${res.status}`); }
     const d = await res.json(); raw = d.choices?.[0]?.message?.content || '';
   }
-  let clean = raw.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+  let clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
   try { return JSON.parse(clean); } catch {}
   const match = clean.match(/\{[\s\S]*\}/);
   if (match) {
@@ -1053,7 +1053,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     try {
       const provObj = PROVIDERS.find(p => p.id === provider);
       const raw = await callAI(provider, apiKey, provObj.model, [{ role: "user", content: WORLD_GEN_PROMPT }], "You generate creative story world options for children. Respond only with a valid JSON array, no markdown.");
-      const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
       const arrMatch = cleaned.match(/\[[\s\S]*\]/);
       if (!arrMatch) throw new Error("No array found");
       const parsed = JSON.parse(arrMatch[0]);
@@ -1070,7 +1070,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     const provObj = PROVIDERS.find(p => p.id === provider);
     try {
       const raw = await callAI(provider, apiKey, provObj.model, newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : newMessages, sysPrompt);
-      const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
       let parsed; try { parsed = JSON.parse(cleaned); } catch { const match = cleaned.match(/\{[\s\S]*\}/); if (match) { try { parsed = JSON.parse(match[0]); } catch { try { parsed = JSON.parse(match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch { throw new Error("AI returned invalid JSON. Tap retry."); } } } else throw new Error("AI returned no JSON. Tap retry."); }
       const assistantMsg = { role: "assistant", content: raw };
       const updatedMessages = [...newMessages, ...(newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : []), assistantMsg];
@@ -1431,7 +1431,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     const provObj = PROVIDERS.find(p => p.id === provider);
     try {
       const raw = await callAI(provider, apiKey, provObj.model, [{ role: "user", content: "Generate the story now." }], sysPrompt);
-      const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
       let parsed;
       // Try direct parse
       try { parsed = JSON.parse(cleaned); } catch {
