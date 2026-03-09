@@ -471,10 +471,6 @@ export default function App() {
             </div>
             <h1 style={{ fontSize: "clamp(38px, 8vw, 68px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: -1.5, margin: "0 0 22px", color: C.cream }}>Stories that{" "}<span style={{ background: `linear-gradient(135deg, ${C.gold} 0%, #ffdc7a 40%, ${C.terra} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>grow with you.</span></h1>
             <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: "clamp(15px, 2.5vw, 19px)", lineHeight: 1.65, margin: "0 auto 40px", maxWidth: 540 }}>An AI-powered storytelling app where your family becomes the heroes.</p>
-            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-              <button onClick={() => { SFX.select(); setAppMode("adventure"); }} style={{ background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldDark} 100%)`, color: "#1a0f00", border: "none", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, fontSize: 16, boxShadow: "0 6px 28px rgba(245,200,66,0.35)" }}>Start a Story</button>
-              <button onClick={() => setShowKeySetup(true)} style={{ background: "rgba(245,200,66,0.07)", color: C.gold, border: "1px solid rgba(245,200,66,0.28)", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 16 }}>Settings</button>
-            </div>
           </section>
           <div style={{ maxWidth: 500, width: "100%", marginBottom: 40 }}><DailyChallenge /></div>
           <div style={{ width: "100%", maxWidth: 640, height: 1, background: "linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.18) 50%, transparent 100%)", marginBottom: 50 }} />
