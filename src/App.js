@@ -85,8 +85,13 @@ async function battleApiCall(provider, apiKey, system, messages) {
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `${provider} error ${res.status}`); }
     const d = await res.json(); raw = d.choices?.[0]?.message?.content || '';
   }
-  const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-  try { return JSON.parse(clean); } catch { throw new Error('Parse error. The arena is silent. Try again.'); }
+  const clean = raw.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+  try { return JSON.parse(clean); } catch {
+    // Try to extract JSON object from surrounding text
+    const match = clean.match(/\{[\s\S]*\}/);
+    if (match) { try { return JSON.parse(match[0]); } catch {} }
+    throw new Error('Parse error. The arena is silent. Try again.');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -871,7 +876,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
             {OBJECTIVES.map(o => <div key={o} onClick={() => setObjective(o)} style={{ background: objective === o ? `${AC}20` : 'rgba(255,255,255,0.04)', border: `2px solid ${objective === o ? AC : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', textAlign: 'center', fontFamily: M, fontSize: '13px', letterSpacing: '0.5px', color: objective === o ? AC : '#9990a8', fontWeight: '600', transition: 'all 0.2s', boxShadow: objective === o ? `0 2px 12px ${AC}30` : 'none' }}>{o.toUpperCase()}</div>)}
           </div>
-          {error && <div style={{ color: '#c06060', fontFamily: M, fontSize: '9px', marginBottom: '10px' }}>{error}</div>}
+          {error && <div style={{ color: '#f07070', fontFamily: M, fontSize: '13px', marginBottom: '10px' }}>{error}</div>}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}><BK onClick={() => setScreen('arena')} /><PB on={!!objective && !loading} onClick={() => objective && !loading && getBriefingData()} sx={{ padding: '12px 36px' }}>{loading ? `ANALYZING${'.'.repeat(dots)}` : 'ANALYZE + CONTINUE'}</PB></div>
         </div>
         <GlobalStyles />
@@ -894,7 +899,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
             )}
           </div>
         )}
-        {error && <div style={{ color: '#c06060', fontFamily: M, fontSize: '9px', marginBottom: '10px' }}>{error}</div>}
+        {error && <div style={{ color: '#f07070', fontFamily: M, fontSize: '13px', marginBottom: '10px' }}>{error}</div>}
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}><BK onClick={() => setScreen('objective')} /><PB on={!loading} onClick={startBattle} sx={{ padding: '12px 48px', fontSize: '10px', letterSpacing: '4px' }}>BEGIN</PB></div>
       </div>
       <GlobalStyles />
