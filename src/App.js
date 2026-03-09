@@ -469,7 +469,7 @@ export default function App() {
               <span style={{ fontSize: 12 }}>✦</span>
               <span style={{ color: C.gold, fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 700 }}>AI-Powered Family Storytelling</span>
             </div>
-            <h1 style={{ fontSize: "clamp(38px, 8vw, 68px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: -1.5, margin: "0 0 22px", color: C.cream }}>Stories that{" "}<span style={{ background: `linear-gradient(135deg, ${C.gold} 0%, #ffdc7a 40%, ${C.terra} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>grow with you.</span></h1>
+            <h1 style={{ fontSize: "clamp(38px, 8vw, 68px)", fontWeight: 800, lineHeight: 1.15, letterSpacing: -1.5, margin: "0 0 22px", color: C.cream }}>Stories that{" "}<span style={{ background: `linear-gradient(135deg, ${C.gold} 0%, #ffdc7a 40%, ${C.terra} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block", paddingBottom: 4 }}>grow with you.</span></h1>
             <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: "clamp(15px, 2.5vw, 19px)", lineHeight: 1.65, margin: "0 auto 40px", maxWidth: 540 }}>An AI-powered storytelling app where your family becomes the heroes.</p>
           </section>
           <div style={{ maxWidth: 500, width: "100%", marginBottom: 40 }}><DailyChallenge /></div>
@@ -487,7 +487,7 @@ export default function App() {
               </div>
             ))}
           </section>
-          <p style={{ marginTop: 56, color: C.textDim, fontSize: 12, letterSpacing: 2, textTransform: "uppercase" }}>Powered by Claude · Built for families</p>
+          <p style={{ marginTop: 56, color: C.textDim, fontSize: 12, letterSpacing: 2, textTransform: "uppercase" }}>Powered by AI · Built for families</p>
           {parentPin && <button onClick={() => { setPinAction("unlock"); setShowPinSetup(true); }} style={{ marginTop: 12, background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 8, padding: "6px 14px", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>📊 Parent Dashboard</button>}
         </main>
         {showKeySetup && <KeySetupOverlay provider={provider} setProvider={setProvider} apiKey={apiKey} setApiKey={setApiKey} keyInput={keyInput} setKeyInput={setKeyInput} onClose={() => setShowKeySetup(false)} onSave={(k, p) => { setApiKey(k); setProvider(p); localStorage.setItem("momah_api_key", k); localStorage.setItem("momah_provider", p); setShowKeySetup(false); }} />}
@@ -815,7 +815,16 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   };
 
   // ── Battle style helpers ──
-  const page = { background: 'linear-gradient(180deg, #0a0a1a 0%, #0f0818 50%, #0a0a1a 100%)', minHeight: '100vh', fontFamily: S, color: '#e8e0f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' };
+  const page = { background: 'linear-gradient(180deg, #0a0a1a 0%, #0f0818 50%, #0a0a1a 100%)', minHeight: '100vh', fontFamily: S, color: '#e8e0f0', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px', paddingTop: 0 };
+  const BattleNav = ({ title, backFn }) => (
+    <div style={{ width: '100%', maxWidth: 580, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0 12px', marginBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button onClick={backFn} style={{ background: 'none', border: 'none', color: '#9990a8', fontSize: 22, cursor: 'pointer', padding: 4, fontFamily: S }}>←</button>
+        <span style={{ color: '#6a6280', fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', fontFamily: M }}>{title || 'Battle Arena'}</span>
+      </div>
+      <button onClick={() => setMuted(m => !m)} style={{ background: 'none', border: 'none', color: '#9990a8', fontSize: 18, cursor: 'pointer', padding: 4 }}>{muted ? '🔇' : '🔊'}</button>
+    </div>
+  );
   const crd = (on) => ({ background: on ? `${AC}18` : 'rgba(255,255,255,0.04)', border: `2px solid ${on ? AC : 'rgba(255,255,255,0.1)'}`, borderRadius: '14px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s' });
   const chip = (on, cc) => ({ background: on ? (cc || AC) : 'rgba(255,255,255,0.06)', border: `1px solid ${on ? (cc || AC) : 'rgba(255,255,255,0.15)'}`, borderRadius: '20px', padding: '7px 14px', cursor: 'pointer', fontFamily: M, fontSize: '12px', letterSpacing: '0.5px', color: on ? '#0a0a1a' : '#9990a8', transition: 'all 0.15s' });
   const inp = { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '13px 16px', color: '#e8e0f0', fontSize: '15px', width: '100%', outline: 'none', fontFamily: S, boxSizing: 'border-box' };
@@ -870,11 +879,9 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   if (screen === 'tone') return (
     <div style={page}>
       {forgeOpen && <ForgeModal />}
+      <BattleNav title="Battle Arena" backFn={onBack} />
       <div style={{ textAlign: 'center', maxWidth: '580px', width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <Ey c="STORYVERSE BATTLE ARENA" />
-          <button onClick={onBack} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '5px', padding: '4px 10px', color: '#7a7290', cursor: 'pointer', fontFamily: M, fontSize: '12px', letterSpacing: '2px' }}>← MENU</button>
-        </div>
+        <Ey c="CHOOSE YOUR VOICE" />
         <H1 c="Choose Your Voice" /><Sub c="THE NARRATOR SHAPES EVERYTHING" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '28px' }}>
           {[{ id: 'kids_young', c: '#22c55e', lbl: 'KIDS JUNIOR', sub: 'AGES 6-8', desc: 'Fun and silly. BOOM! CRASH! Simple words. Win through heart and cleverness.' }, { id: 'kids_older', c: '#f59e0b', lbl: 'KIDS', sub: 'AGES 9-12', desc: 'Cinematic action. Real strategy. Vivid consequences. Read-aloud ready.' }, ...(!childMode ? [{ id: 'intense', c: '#4f8ef7', lbl: 'INTENSE', sub: 'AGES 13+', desc: 'High stakes. Gritty damage. Tactics decide everything. TTS-optimized.' }, { id: 'brutal', c: '#e03c3c', lbl: 'BRUTAL', sub: 'ADULT', desc: 'Forensic. Detached. Terminal Report. Psychological dissolution.' }] : [])].map(t => (
@@ -903,6 +910,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   // TYPE
   if (screen === 'type') return (
     <div style={page}>
+      <BattleNav title="Battle Format" backFn={() => setScreen('tone')} />
       <div style={{ textAlign: 'center', maxWidth: '560px', width: '100%' }}>
         <Ey c="BATTLE FORMAT" /><H1 c="How do they fight?" /><Sub c="STRUCTURE SHAPES EVERYTHING" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
@@ -936,6 +944,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
     return (
       <div style={page}>
         {forgeOpen && <ForgeModal />}
+        <BattleNav title="Fighters" backFn={() => setScreen('type')} />
         <div style={{ textAlign: 'center', maxWidth: '540px', width: '100%' }}>
           <Ey c="THE COMBATANTS" /><H1 c="Name Your Fighters" /><Sub c="BE SPECIFIC" />
           {isCinematic && (
@@ -997,6 +1006,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
     const arenaOk = arena && !(arena === 'custom' && !customArena.trim());
     return (
       <div style={page}>
+        <BattleNav title="Arena" backFn={() => setScreen('fighters')} />
         <div style={{ textAlign: 'center', maxWidth: '520px', width: '100%' }}>
           <Ey c="THE BATTLEFIELD" /><H1 c="Choose Your Arena" /><Sub c="THE ENVIRONMENT IS A COMBATANT" />
           <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
@@ -1020,6 +1030,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   if (screen === 'objective') {
     return (
       <div style={page}>
+        <BattleNav title="Objective" backFn={() => setScreen('arena')} />
         <div style={{ textAlign: 'center', maxWidth: '460px', width: '100%' }}>
           <Ey c="WIN CONDITION" /><H1 c="What decides this?" /><Sub c="THE OBJECTIVE DEFINES WHAT VICTORY COSTS" />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
@@ -1036,6 +1047,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   // BRIEFING
   if (screen === 'briefing') return (
     <div style={page}>
+      <BattleNav title="Briefing" backFn={() => setScreen('objective')} />
       <div style={{ textAlign: 'center', maxWidth: '500px', width: '100%' }}>
         <Ey c={tone === 'brutal' ? 'THE PREMORTEM' : isKids ? 'BATTLE CARD' : 'PRE-BATTLE ANALYSIS'} />
         <H1 c={tone === 'brutal' ? 'Initial Conditions' : isKids ? 'Ready to Fight?' : 'Power Analysis'} />
@@ -1330,30 +1342,34 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
   // SETUP_PLAYER
   if (phase === "setup_player") return shell("Who's Playing?", (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, paddingTop: 20 }}>
-      <h2 style={{ color: C.gold, fontSize: 22, margin: "0 0 8px", fontWeight: 700 }}>Who is playing today?</h2>
+      <div style={{ textAlign: "center", marginBottom: 8 }}>
+        <div style={{ fontSize: 36, marginBottom: 6 }}>📖</div>
+        <h2 style={{ color: C.gold, fontSize: 24, margin: "0 0 4px", fontWeight: 800 }}>Who is playing today?</h2>
+        <div style={{ width: 60, height: 2, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "8px auto 0" }} />
+      </div>
       {savedSession && (
-        <div style={{ background: C.card, border: `1px solid ${C.gold}40`, borderRadius: 12, padding: 14, marginBottom: 8 }}>
-          <p style={{ color: C.gold, fontWeight: 600, margin: "0 0 6px", fontSize: 14 }}>📖 Saved adventure found</p>
-          <p style={{ color: C.creamDim, fontSize: 13, margin: "0 0 10px" }}>{savedSession.worldObj?.title || savedSession.customWorld || "In progress"} ({savedSession.beatCount || 0} beats)</p>
+        <div style={{ background: C.card, border: `1px solid ${C.gold}50`, borderRadius: 14, padding: 16, marginBottom: 4, animation: "shimmer 2s ease-in-out infinite" }}>
+          <p style={{ color: C.gold, fontWeight: 700, margin: "0 0 6px", fontSize: 15 }}>📖 Saved adventure found</p>
+          <p style={{ color: C.creamDim, fontSize: 13, margin: "0 0 12px" }}>{savedSession.worldObj?.title || savedSession.customWorld || "In progress"} ({savedSession.beatCount || 0} beats)</p>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => resumeSaved(savedSession)} style={{ flex: 1, background: C.green, color: C.cream, border: "none", borderRadius: 8, padding: "10px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Resume</button>
-            <button onClick={() => { localStorage.removeItem("momah_active_session"); setSavedSession(null); }} style={{ flex: 1, background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 8, padding: "10px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Start fresh</button>
+            <button onClick={() => resumeSaved(savedSession)} style={{ flex: 1, background: `linear-gradient(135deg, ${C.green} 0%, #2a8f48 100%)`, color: C.cream, border: "none", borderRadius: 10, padding: "11px", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: "inherit" }}>Resume</button>
+            <button onClick={() => { localStorage.removeItem("momah_active_session"); setSavedSession(null); }} style={{ flex: 1, background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 10, padding: "11px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Start fresh</button>
           </div>
         </div>
       )}
-      {[{ key: "justina", label: "Justina", sub: "Age 9, 4th grade", color: C.justina }, { key: "nathaniel", label: "Nathaniel", sub: "Age 7, 2nd grade", color: C.nathaniel }, { key: "both", label: "Both together", sub: "Joint adventure", color: C.gold }].map(opt => (
-        <button key={opt.key} onClick={() => { SFX.select(); setPlayers(opt.key); let list; if (opt.key === "justina") list = [{ ...KNOWN_PLAYERS.justina, isKnown: true }]; else if (opt.key === "nathaniel") list = [{ ...KNOWN_PLAYERS.nathaniel, isKnown: true }]; else list = [{ ...KNOWN_PLAYERS.justina, isKnown: true }, { ...KNOWN_PLAYERS.nathaniel, isKnown: true }]; setPlayerList(list); setCharacterChoices({}); setCharSetupIdx(0); setPhase("setup_character"); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${opt.color}20`, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 20 }}>{opt.key === "both" ? "👫" : "🧒"}</span></div>
-          <div><p style={{ color: C.cream, fontWeight: 600, margin: 0, fontSize: 16 }}>{opt.label}</p><p style={{ color: C.textDim, margin: 0, fontSize: 13 }}>{opt.sub}</p></div>
+      {[{ key: "justina", label: "Justina", sub: "Age 9, 4th grade", color: C.justina, icon: "👧🏾" }, { key: "nathaniel", label: "Nathaniel", sub: "Age 7, 2nd grade", color: C.nathaniel, icon: "👦🏾" }, { key: "both", label: "Both together", sub: "Joint adventure", color: C.gold, icon: "👫🏾" }].map(opt => (
+        <button key={opt.key} onClick={() => { SFX.select(); setPlayers(opt.key); let list; if (opt.key === "justina") list = [{ ...KNOWN_PLAYERS.justina, isKnown: true }]; else if (opt.key === "nathaniel") list = [{ ...KNOWN_PLAYERS.nathaniel, isKnown: true }]; else list = [{ ...KNOWN_PLAYERS.justina, isKnown: true }, { ...KNOWN_PLAYERS.nathaniel, isKnown: true }]; setPlayerList(list); setCharacterChoices({}); setCharSetupIdx(0); setPhase("setup_character"); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${opt.color}`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit", transition: "all 0.2s" }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${opt.color}15`, border: `1px solid ${opt.color}30`, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 22 }}>{opt.icon}</span></div>
+          <div><p style={{ color: C.cream, fontWeight: 700, margin: 0, fontSize: 16 }}>{opt.label}</p><p style={{ color: C.textDim, margin: "2px 0 0", fontSize: 13 }}>{opt.sub}</p></div>
         </button>
       ))}
-      <button onClick={() => { SFX.select(); setPlayers("custom"); setPhase("setup_character"); setCharSetupIdx(0); setPlayerList([]); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${C.gold}20`, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 20 }}>✨</span></div>
-        <div><p style={{ color: C.cream, fontWeight: 600, margin: 0, fontSize: 16 }}>Someone else</p><p style={{ color: C.textDim, margin: 0, fontSize: 13 }}>Enter a name and age</p></div>
+      <button onClick={() => { SFX.select(); setPlayers("custom"); setPhase("setup_character"); setCharSetupIdx(0); setPlayerList([]); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px dashed ${C.gold}40`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit", transition: "all 0.2s" }}>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${C.gold}10`, border: `1px dashed ${C.gold}30`, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 22 }}>✨</span></div>
+        <div><p style={{ color: C.cream, fontWeight: 600, margin: 0, fontSize: 16 }}>Someone else</p><p style={{ color: C.textDim, margin: "2px 0 0", fontSize: 13 }}>Enter a name and age</p></div>
       </button>
-      <button onClick={() => { SFX.select(); setPlayers("group"); setPhase("setup_group"); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${C.gold}20`, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 20 }}>👥</span></div>
-        <div><p style={{ color: C.cream, fontWeight: 600, margin: 0, fontSize: 16 }}>A group</p><p style={{ color: C.textDim, margin: 0, fontSize: 13 }}>Multiple players</p></div>
+      <button onClick={() => { SFX.select(); setPlayers("group"); setPhase("setup_group"); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px dashed ${C.gold}40`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit", transition: "all 0.2s" }}>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${C.gold}10`, border: `1px dashed ${C.gold}30`, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 22 }}>👥</span></div>
+        <div><p style={{ color: C.cream, fontWeight: 600, margin: 0, fontSize: 16 }}>A group</p><p style={{ color: C.textDim, margin: "2px 0 0", fontSize: 13 }}>Multiple players</p></div>
       </button>
     </div>
   ), true, onBack);
@@ -1410,21 +1426,23 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
       // Known player: auto-advance confirmation
       if (isKnown && !wantsDifferent) {
         return shell(`${p.name}'s Character`, (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, paddingTop: 20 }}>
-            <h2 style={{ color: getPlayerColor(p.id, playerColors), fontSize: 22, margin: 0, fontWeight: 700 }}>{p.name}</h2>
-            <p style={{ color: C.creamDim, fontSize: 15 }}>Playing as themselves.</p>
-            <button onClick={() => setWantsDifferent(true)} style={{ background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 10, padding: "10px 16px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Play as someone different?</button>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, paddingTop: 20, alignItems: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: `${getPlayerColor(p.id, playerColors)}15`, border: `2px solid ${getPlayerColor(p.id, playerColors)}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>{p.id === "justina" ? "👧🏾" : p.id === "nathaniel" ? "👦🏾" : "🧒"}</div>
+            <h2 style={{ color: getPlayerColor(p.id, playerColors), fontSize: 26, margin: 0, fontWeight: 800 }}>{p.name}</h2>
+            <p style={{ color: C.creamDim, fontSize: 15, fontStyle: "italic" }}>Playing as themselves.</p>
+            <button onClick={() => setWantsDifferent(true)} style={{ background: "none", border: `1px dashed ${C.textDim}`, color: C.creamDim, borderRadius: 12, padding: "10px 18px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Play as someone different?</button>
             <PrimaryBtn onClick={() => { setCharacterChoices(prev => ({ ...prev, [p.id]: { type: "self", name: p.name, age: p.age } })); advanceFromChar(); }}>Continue as {p.name}</PrimaryBtn>
           </div>
         ), true, () => { if (charSetupIdx > 0) { setCharSetupIdx(charSetupIdx - 1); setWantsDifferent(false); } else setPhase("setup_player"); });
       }
-      // Full character choice (unknown player or known player who tapped 'different')
+      // Full character choice
+      const charOpts = [{ t: "self", icon: "🪞", label: `Yourself (${p.name})` }, { t: "known", icon: "👥", label: "Someone you know" }, { t: "invented", icon: "✨", label: "A made-up character" }];
       return shell(`${p.name}'s Character`, (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, paddingTop: 20 }}>
           <h2 style={{ color: getPlayerColor(p.id, playerColors), fontSize: 22, margin: 0, fontWeight: 700 }}>{p.name}, who do you want to be?</h2>
-          {["self", "known", "invented"].map(t => (
-            <button key={t} onClick={() => { setCharType(t); if (t === "self") setCharCustomName(p.name); else setCharCustomName(""); }} style={{ background: charType === t ? C.green : C.card, border: `1px solid ${charType === t ? C.green : C.border}`, color: C.cream, borderRadius: 12, padding: "14px 18px", cursor: "pointer", textAlign: "left", fontSize: 15, fontFamily: "inherit" }}>
-              {t === "self" ? `Yourself (${p.name})` : t === "known" ? "Someone you know" : "A made-up character"}
+          {charOpts.map(o => (
+            <button key={o.t} onClick={() => { setCharType(o.t); if (o.t === "self") setCharCustomName(p.name); else setCharCustomName(""); }} style={{ background: charType === o.t ? C.green : C.card, border: `1px solid ${charType === o.t ? C.green : C.border}`, color: C.cream, borderRadius: 14, padding: "14px 18px", cursor: "pointer", textAlign: "left", fontSize: 15, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s" }}>
+              <span style={{ fontSize: 22 }}>{o.icon}</span><span>{o.label}</span>
             </button>
           ))}
           {charType !== "self" && <input value={charCustomName} onChange={e => setCharCustomName(e.target.value)} placeholder={charType === "known" ? "Who? (name)" : "Character name"} style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 18px", color: C.cream, fontSize: 15, boxSizing: "border-box", fontFamily: "inherit" }} />}
@@ -1454,8 +1472,9 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     return shell("World", (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, paddingTop: 20 }}>
         <h2 style={{ color: C.gold, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>Where does the story take place?</h2>
+        <div style={{ width: 50, height: 2, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginBottom: 12 }} />
         {worldsLoading && <p style={{ color: C.creamDim, fontSize: 14, animation: "pulse 1.5s infinite" }}>Generating worlds...</p>}
-        {displayWorlds.map((w, i) => <button key={i} onClick={() => { SFX.select(); setWorldObj(w); setPhase("setup_tone"); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 18px", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}><p style={{ color: C.cream, fontWeight: 600, margin: 0, fontSize: 15 }}>{w.title}</p><p style={{ color: C.creamDim, margin: "4px 0 0", fontSize: 13 }}>{w.desc}</p></button>)}
+        {displayWorlds.map((w, i) => <button key={i} onClick={() => { SFX.select(); setWorldObj(w); setPhase("setup_tone"); }} style={{ background: `linear-gradient(135deg, ${C.card} 0%, rgba(15,30,17,0.6) 100%)`, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.2s" }}><p style={{ color: C.cream, fontWeight: 700, margin: 0, fontSize: 16 }}>{w.title}</p><p style={{ color: C.creamDim, margin: "4px 0 0", fontSize: 13, lineHeight: 1.5 }}>{w.desc}</p></button>)}
         <button onClick={() => setWorldObj("custom")} style={{ background: "transparent", border: `1px dashed ${C.textDim}`, borderRadius: 12, padding: "14px 18px", cursor: "pointer", color: C.creamDim, fontSize: 14, textAlign: "left", fontFamily: "inherit" }}>✨ Somewhere totally different...</button>
         {worldObj === "custom" && <div style={{ display: "flex", flexDirection: "column", gap: 8 }}><input value={customWorld} onChange={e => setCustomWorld(e.target.value)} placeholder="Describe your world" style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 16px", color: C.cream, fontSize: 14, boxSizing: "border-box", fontFamily: "inherit" }} /><PrimaryBtn disabled={!customWorld.trim()} onClick={() => setPhase("setup_tone")}>Continue</PrimaryBtn></div>}
       </div>
@@ -1466,7 +1485,8 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
   if (phase === "setup_tone") return shell("Tone", (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, paddingTop: 20 }}>
       <h2 style={{ color: C.gold, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>What is the tone?</h2>
-      {TONES.map(t => <button key={t.id} onClick={() => { SFX.select(); setToneObj(t); setMusicTrack(getSuggestedTrack(t.label)); setPhase("setup_duration"); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit" }}><span style={{ fontSize: 24 }}>{t.emoji}</span><span style={{ color: C.cream, fontSize: 15, fontWeight: 600 }}>{t.label}</span></button>)}
+      <div style={{ width: 50, height: 2, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginBottom: 12 }} />
+      {TONES.map(t => <button key={t.id} onClick={() => { SFX.select(); setToneObj(t); setMusicTrack(getSuggestedTrack(t.label)); setPhase("setup_duration"); }} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, fontFamily: "inherit", transition: "all 0.2s" }}><span style={{ fontSize: 32 }}>{t.emoji}</span><span style={{ color: C.cream, fontSize: 16, fontWeight: 700 }}>{t.label}</span></button>)}
       <button onClick={() => setToneObj("custom")} style={{ background: "transparent", border: `1px dashed ${C.textDim}`, borderRadius: 12, padding: "14px 18px", cursor: "pointer", color: C.creamDim, fontSize: 14, textAlign: "left", fontFamily: "inherit" }}>🎨 Something else...</button>
       {toneObj === "custom" && <div style={{ display: "flex", flexDirection: "column", gap: 8 }}><input value={customTone} onChange={e => setCustomTone(e.target.value)} placeholder="Describe the tone" style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 16px", color: C.cream, fontSize: 14, boxSizing: "border-box", fontFamily: "inherit" }} /><PrimaryBtn disabled={!customTone.trim()} onClick={() => setPhase("setup_duration")}>Continue</PrimaryBtn></div>}
     </div>
@@ -1476,10 +1496,11 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
   if (phase === "setup_duration") return shell("Duration", (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, paddingTop: 20 }}>
       <h2 style={{ color: C.gold, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>How long do we have?</h2>
-      {DURATIONS.map(d => <button key={d.id} onClick={() => { SFX.select(); setDuration(d.id); }} style={{ background: duration === d.id ? C.green : C.card, border: `1px solid ${duration === d.id ? C.green : C.border}`, borderRadius: 12, padding: "16px 18px", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}><p style={{ color: C.cream, fontWeight: 600, margin: 0, fontSize: 16 }}>{d.label}</p><p style={{ color: duration === d.id ? C.cream : C.textDim, margin: "4px 0 0", fontSize: 13 }}>{d.sub}</p></button>)}
+      <div style={{ width: 50, height: 2, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginBottom: 12 }} />
+      {DURATIONS.map(d => { const pct = d.id === "20" ? 33 : d.id === "45" ? 66 : 100; return <button key={d.id} onClick={() => { SFX.select(); setDuration(d.id); }} style={{ background: duration === d.id ? C.green : C.card, border: `1px solid ${duration === d.id ? C.green : C.border}`, borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.2s" }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ color: C.cream, fontWeight: 700, margin: 0, fontSize: 16 }}>{d.label}</p></div><p style={{ color: duration === d.id ? C.cream : C.textDim, margin: "4px 0 8px", fontSize: 13 }}>{d.sub}</p><div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: duration === d.id ? C.cream : C.gold, borderRadius: 2, transition: "all 0.3s" }} /></div></button>; })}
       <p style={{ color: C.creamDim, fontSize: 14, margin: "12px 0 4px" }}>Ambient music:</p>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-        {[{ id: "none", label: "None", emoji: "🔇" }, { id: "epic", label: "Drums", emoji: "🥁" }, { id: "spooky", label: "Dark", emoji: "🌲" }, { id: "playful", label: "Bells", emoji: "🔔" }, { id: "warm", label: "Calm", emoji: "🌅" }, { id: "african", label: "Igbo", emoji: "🪘" }].map(m => <button key={m.id} onClick={() => { SFX.select(); setMusicTrack(m.id); }} style={{ background: musicTrack === m.id ? "rgba(245,200,66,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${musicTrack === m.id ? C.gold : C.border}`, borderRadius: 10, padding: "10px 6px", cursor: "pointer", textAlign: "center", fontFamily: "inherit" }}><span style={{ fontSize: 20, display: "block" }}>{m.emoji}</span><span style={{ color: musicTrack === m.id ? C.gold : C.cream, fontSize: 11, display: "block", marginTop: 4 }}>{m.label}</span></button>)}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+        {[{ id: "none", label: "None", emoji: "🔇" }, { id: "epic", label: "Drums", emoji: "🥁" }, { id: "spooky", label: "Dark", emoji: "🌲" }, { id: "playful", label: "Bells", emoji: "🔔" }, { id: "warm", label: "Calm", emoji: "🌅" }, { id: "african", label: "Igbo", emoji: "🪘" }].map(m => <button key={m.id} onClick={() => { SFX.select(); setMusicTrack(m.id); }} style={{ background: musicTrack === m.id ? "rgba(245,200,66,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${musicTrack === m.id ? C.gold : C.border}`, borderRadius: 10, padding: "10px 4px", cursor: "pointer", textAlign: "center", fontFamily: "inherit" }}><span style={{ fontSize: 24, display: "block" }}>{m.emoji}</span><span style={{ color: musicTrack === m.id ? C.gold : C.creamDim, fontSize: 10, display: "block", marginTop: 4 }}>{m.label}</span></button>)}
       </div>
       <PrimaryBtn disabled={!duration} onClick={startStory} style={{ marginTop: 16 }}>Begin the Adventure</PrimaryBtn>
     </div>
@@ -1558,6 +1579,12 @@ const STORYTIME_GENRES = [
   { id: "funny", label: "Silly Story", emoji: "🤪", desc: "Goofy characters, unexpected twists, lots of laughs." },
   { id: "myth", label: "Myth or Legend", emoji: "🐉", desc: "Ancient heroes, gods, and the stories that shaped worlds." },
   { id: "real", label: "Inspired by Real Life", emoji: "🌍", desc: "Based on real places, people, or events. Made magical." },
+  { id: "mystery", label: "Mystery", emoji: "🔍", desc: "Clues, suspects, and a puzzle to solve before the end." },
+  { id: "superhero", label: "Superhero", emoji: "🦸", desc: "Powers awaken. A villain rises. Only one hero can stop them." },
+  { id: "sports", label: "Sports", emoji: "🏆", desc: "The big game, the underdog, and the moment everything changes." },
+  { id: "animals", label: "Animal Kingdom", emoji: "🦁", desc: "The wild has its own rules. Animals with voices and courage." },
+  { id: "historical", label: "Historical", emoji: "🏛️", desc: "Real eras, real cultures. History brought to life with story." },
+  { id: "custom", label: "Your Own Idea", emoji: "✨", desc: "Describe any genre or theme. The AI builds it for you." },
 ];
 
 const STORYTIME_LENGTHS = [
@@ -1673,35 +1700,39 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     const seeds = getWorldSeeds();
     return shell("Storytime", (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, paddingTop: 10 }}>
-        <h2 style={{ color: "#a78bfa", fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>🌙 Storytime</h2>
-        <p style={{ color: C.creamDim, fontSize: 14, margin: 0 }}>A story just for you. No choices, just listen.</p>
+        <div style={{ textAlign: "center", marginBottom: 4 }}>
+          <div style={{ fontSize: 36, marginBottom: 4 }}>🌙</div>
+          <h2 style={{ color: "#a78bfa", fontSize: 24, margin: "0 0 4px", fontWeight: 800 }}>Storytime</h2>
+          <p style={{ color: C.creamDim, fontSize: 14, margin: 0, fontStyle: "italic" }}>A story just for you. No choices, just listen.</p>
+          <div style={{ width: 60, height: 2, background: "linear-gradient(90deg, transparent, #a78bfa, transparent)", margin: "10px auto 0" }} />
+        </div>
 
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={listenerName} onChange={e => setListenerName(e.target.value)} placeholder="Listener's name" style={{ flex: 2, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px", color: C.cream, fontSize: 14, fontFamily: "inherit" }} />
-          <input value={listenerAge} onChange={e => setListenerAge(e.target.value)} placeholder="Age" type="number" style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px", color: C.cream, fontSize: 14, fontFamily: "inherit" }} />
+          <input value={listenerName} onChange={e => setListenerName(e.target.value)} placeholder="Listener's name" style={{ flex: 2, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", color: C.cream, fontSize: 14, fontFamily: "inherit" }} />
+          <input value={listenerAge} onChange={e => setListenerAge(e.target.value)} placeholder="Age" type="number" style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", color: C.cream, fontSize: 14, fontFamily: "inherit" }} />
         </div>
 
         <p style={{ color: C.textDim, fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1 }}>Genre</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
           {STORYTIME_GENRES.map(g => (
-            <button key={g.id} onClick={() => { SFX.select(); setGenre(g); }} style={{ background: genre?.id === g.id ? "rgba(139,92,246,0.12)" : C.card, border: `1px solid ${genre?.id === g.id ? "#a78bfa" : C.border}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+            <button key={g.id} onClick={() => { SFX.select(); setGenre(g); }} style={{ background: genre?.id === g.id ? "rgba(139,92,246,0.12)" : C.card, border: `1px solid ${genre?.id === g.id ? "#a78bfa" : C.border}`, borderRadius: 10, padding: "10px 10px", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
               <span style={{ fontSize: 18 }}>{g.emoji}</span>
-              <p style={{ color: genre?.id === g.id ? "#a78bfa" : C.cream, fontWeight: 600, margin: "4px 0 2px", fontSize: 13 }}>{g.label}</p>
-              <p style={{ color: C.textDim, margin: 0, fontSize: 11 }}>{g.desc}</p>
+              <p style={{ color: genre?.id === g.id ? "#a78bfa" : C.cream, fontWeight: 600, margin: "4px 0 2px", fontSize: 12 }}>{g.label}</p>
+              <p style={{ color: C.textDim, margin: 0, fontSize: 10, lineHeight: 1.4 }}>{g.desc}</p>
             </button>
           ))}
         </div>
 
-        <p style={{ color: C.textDim, fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1 }}>Length</p>
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Length</p>
         <div style={{ display: "flex", gap: 8 }}>
           {STORYTIME_LENGTHS.map(l => (
-            <button key={l.id} onClick={() => { SFX.select(); setStoryLength(l.id); }} style={{ flex: 1, background: storyLength === l.id ? "rgba(139,92,246,0.12)" : C.card, border: `1px solid ${storyLength === l.id ? "#a78bfa" : C.border}`, borderRadius: 8, padding: "8px", cursor: "pointer", textAlign: "center", fontFamily: "inherit" }}>
-              <p style={{ color: storyLength === l.id ? "#a78bfa" : C.cream, margin: 0, fontSize: 13, fontWeight: 600 }}>{l.label}</p>
+            <button key={l.id} onClick={() => { SFX.select(); setStoryLength(l.id); }} style={{ flex: 1, background: storyLength === l.id ? "rgba(139,92,246,0.15)" : C.card, border: `1px solid ${storyLength === l.id ? "#a78bfa" : C.border}`, borderRadius: 24, padding: "10px 8px", cursor: "pointer", textAlign: "center", fontFamily: "inherit", transition: "all 0.2s" }}>
+              <p style={{ color: storyLength === l.id ? "#a78bfa" : C.cream, margin: 0, fontSize: 13, fontWeight: 700 }}>{l.label}</p>
             </button>
           ))}
         </div>
 
-        <input value={customPrompt} onChange={e => setCustomPrompt(e.target.value)} placeholder="Special request? (e.g. 'a story about a brave fox who lives in the clouds')" style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px", color: C.cream, fontSize: 14, boxSizing: "border-box", fontFamily: "inherit" }} />
+        <input value={customPrompt} onChange={e => setCustomPrompt(e.target.value)} placeholder="Special request? (e.g. 'a story about a brave fox who lives in the clouds')" style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 14px", minHeight: 52, color: C.cream, fontSize: 14, boxSizing: "border-box", fontFamily: "inherit", fontStyle: customPrompt ? "normal" : "italic" }} />
 
         {/* World Seeds */}
         {seeds.length > 0 && (
@@ -1723,7 +1754,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         )}
 
         {/* Music */}
-        <p style={{ color: C.textDim, fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1 }}>Music</p>
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Music</p>
         <div style={{ display: "flex", gap: 6 }}>
           {[{ id: "none", e: "🔇" }, { id: "warm", e: "🌅" }, { id: "spooky", e: "🌲" }, { id: "african", e: "🪘" }, { id: "playful", e: "🔔" }, { id: "scifi", e: "🪐" }].map(m => (
             <button key={m.id} onClick={() => setMusicTrack(m.id)} style={{ flex: 1, background: musicTrack === m.id ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${musicTrack === m.id ? "#a78bfa" : C.border}`, borderRadius: 8, padding: "8px 4px", cursor: "pointer", textAlign: "center", fontSize: 18, fontFamily: "inherit" }}>{m.e}</button>
@@ -1731,7 +1762,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         </div>
 
         {/* Soundscape */}
-        <p style={{ color: C.textDim, fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1 }}>Ambient Soundscape</p>
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Ambient Soundscape</p>
         <div style={{ display: "flex", gap: 6 }}>
           {[{ id: "none", l: "None" }, { id: "rain", l: "🌧 Rain" }, { id: "fire", l: "🔥 Fire" }, { id: "forest", l: "🌿 Forest" }, { id: "ocean", l: "🌊 Ocean" }].map(s => (
             <button key={s.id} onClick={() => setSoundscape(s.id)} style={{ flex: 1, background: soundscape === s.id ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${soundscape === s.id ? "#a78bfa" : C.border}`, borderRadius: 8, padding: "6px 2px", cursor: "pointer", textAlign: "center", fontSize: 11, fontFamily: "inherit", color: soundscape === s.id ? "#a78bfa" : C.creamDim }}>{s.l}</button>
@@ -1739,7 +1770,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         </div>
 
         {/* Sleep Timer */}
-        <p style={{ color: C.textDim, fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1 }}>Sleep Timer</p>
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Sleep Timer</p>
         <div style={{ display: "flex", gap: 6 }}>
           {[{ id: null, l: "Off" }, { id: 10, l: "10 min" }, { id: 20, l: "20 min" }, { id: 30, l: "30 min" }].map(t => (
             <button key={t.id || "off"} onClick={() => setSleepTimer(t.id)} style={{ flex: 1, background: sleepTimer === t.id ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${sleepTimer === t.id ? "#a78bfa" : C.border}`, borderRadius: 8, padding: "8px 4px", cursor: "pointer", textAlign: "center", fontSize: 12, fontFamily: "inherit", color: sleepTimer === t.id ? "#a78bfa" : C.creamDim }}>{t.l}</button>
@@ -1764,21 +1795,27 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     return shell(story.title || "Storytime", (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ height: 5, borderRadius: 3, background: "linear-gradient(90deg, #6d28d9 0%, #a78bfa 50%, #6d28d9 100%)", opacity: 0.7 }} />
-        <h2 style={{ color: "#c4b5fd", fontSize: 24, margin: 0, fontWeight: 700, lineHeight: 1.3 }}>{story.title}</h2>
-        {story.mood && <span style={{ color: "#a78bfa", fontSize: 12, opacity: 0.7, fontStyle: "italic" }}>{story.mood}</span>}
+        <div style={{ textAlign: "center", marginBottom: 4 }}>
+          <span style={{ color: "#a78bfa", fontSize: 12, opacity: 0.5 }}>✦</span>
+          <h2 style={{ color: "#c4b5fd", fontSize: 28, margin: "6px 0 0", fontWeight: 800, lineHeight: 1.3 }}>{story.title}</h2>
+          {story.mood && <span style={{ display: "inline-block", marginTop: 8, background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: 20, padding: "3px 12px", color: "#a78bfa", fontSize: 12, fontStyle: "italic" }}>{story.mood}</span>}
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {paras.map((p, i) => (showAllText || i < visibleParas) && (
-            <p key={i} style={{ color: C.cream, fontSize: 16, lineHeight: 1.85, margin: 0, animation: !showAllText ? "fadeUp 0.5s ease-out" : "none" }}>{p}</p>
+            <p key={i} style={{ color: C.cream, fontSize: 17, lineHeight: 2.0, margin: 0, animation: !showAllText ? "fadeUp 0.5s ease-out" : "none" }}>{p}</p>
           ))}
         </div>
         {!allRevealed && <button onClick={() => { setShowAllText(true); setVisibleParas(paras.length); clearInterval(typewriterRef.current); }} style={{ background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, alignSelf: "flex-start", fontFamily: "inherit" }}>Show all</button>}
         {allRevealed && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 12 }}>
-            <div style={{ height: 1, background: "rgba(139,92,246,0.2)" }} />
-            <p style={{ color: C.textDim, fontSize: 12, textAlign: "center", fontStyle: "italic" }}>The End</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center" }}>
+              <div style={{ flex: 1, height: 1, background: "rgba(139,92,246,0.2)" }} />
+              <span style={{ color: "#a78bfa", fontSize: 11, letterSpacing: 2, opacity: 0.6 }}>✦ THE END ✦</span>
+              <div style={{ flex: 1, height: 1, background: "rgba(139,92,246,0.2)" }} />
+            </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20 }}>
               <p style={{ color: "#a78bfa", fontWeight: 700, fontSize: 14, margin: "0 0 12px", textTransform: "uppercase" }}>How was it?</p>
-              <StarRating value={sessionRating} onChange={setSessionRating} />
+              <StarRating value={sessionRating} onChange={setSessionRating} size={32} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
                 {TAG_OPTIONS.map(tag => { const on = sessionTags.includes(tag); return <button key={tag} onClick={() => setSessionTags(on ? sessionTags.filter(t => t !== tag) : [...sessionTags, tag])} style={{ background: on ? "rgba(139,92,246,0.2)" : "transparent", border: `1px solid ${on ? "#a78bfa" : C.textDim}`, color: on ? "#a78bfa" : C.creamDim, borderRadius: 20, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>{tag}</button>; })}
               </div>
