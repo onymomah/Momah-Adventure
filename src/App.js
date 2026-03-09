@@ -437,45 +437,63 @@ export default function App() {
   useEffect(() => { if (apiKey && apiKey.length > 8) setPhase("setup_mode"); }, []);
 
   // MODE SELECTION SCREEN
-  if (phase === "setup_mode" || (phase === "setup_key" && apiKey && apiKey.length > 8 && !appMode)) {
+  if ((phase === "setup_mode" || (phase === "setup_key" && apiKey && apiKey.length > 8 && !appMode)) && !appMode) {
     if (phase === "setup_key") setPhase("setup_mode");
+    const hModes = [
+      { id: "battle", icon: "⚔️", label: "Battle Arena", sub: "Pit characters against each other with AI-narrated combat.", accent: C.terra, glow: "rgba(212,92,26,0.22)", aborder: "rgba(212,92,26,0.3)" },
+      { id: "adventure", icon: "📖", label: "Choose Your Adventure", sub: "A beat-by-beat story where your choices shape the plot.", accent: "#2d9e52", glow: "rgba(45,158,82,0.18)", aborder: "rgba(45,158,82,0.3)" },
+      { id: "storytime", icon: "🌙", label: "Storytime", sub: "A linear, calming story designed to be read aloud at bedtime.", accent: "#8b5cf6", glow: "rgba(139,92,246,0.18)", aborder: "rgba(139,92,246,0.3)" },
+    ];
     return (
-      <div style={{ minHeight: "100vh", background: C.ink, color: C.cream, fontFamily: "'Playfair Display', Georgia, serif", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ maxWidth: 480, width: "100%", padding: "16px 20px", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, minHeight: 40 }}>
-            <span style={{ color: C.textDim, fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>Storyverse AI</span>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {childMode && <span style={{ background: "rgba(30,107,53,0.3)", color: C.greenLight, fontSize: 10, padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>🔒 CHILD</span>}
-              <button onClick={toggleChildMode} style={{ background: "none", border: `1px solid ${childMode ? C.green : C.textDim}`, color: childMode ? C.greenLight : C.creamDim, borderRadius: 8, padding: "4px 8px", fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{childMode ? "🔒" : "🔓"}</button>
-              <button onClick={() => setShowKeySetup(true)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>🔑</button>
-              <button onClick={() => setMuted(m => !m)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{muted ? "🔇" : "🔊"}</button>
-            </div>
-          </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
-            <div style={{ textAlign: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 48, marginBottom: 8 }}>⚡</div>
-              <h1 style={{ color: C.gold, fontSize: 32, margin: "0 0 6px", fontWeight: 800, letterSpacing: -0.5 }}>Storyverse AI</h1>
-              <p style={{ color: C.creamDim, fontSize: 15, margin: 0, lineHeight: 1.5 }}>What kind of story are we telling today?</p>
-            </div>
-            <DailyChallenge />
-            <button onClick={() => { SFX.select(); setAppMode("battle"); }} style={{ background: "linear-gradient(135deg, rgba(212,92,26,0.12) 0%, rgba(245,200,66,0.08) 100%)", border: "2px solid rgba(212,92,26,0.4)", borderRadius: 16, padding: "24px 20px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s", display: "flex", gap: 16, alignItems: "center" }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(212,92,26,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ fontSize: 28 }}>⚔️</span></div>
-              <div><p style={{ color: C.terraLight, fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Battle Arena</p><p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>1v1 duels, team fights, free-for-alls, cinematic battles, and tournaments.</p></div>
-            </button>
-            <button onClick={() => { SFX.select(); setAppMode("adventure"); }} style={{ background: "linear-gradient(135deg, rgba(30,107,53,0.12) 0%, rgba(245,200,66,0.08) 100%)", border: "2px solid rgba(30,107,53,0.4)", borderRadius: 16, padding: "24px 20px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s", display: "flex", gap: 16, alignItems: "center" }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(30,107,53,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ fontSize: 28 }}>📖</span></div>
-              <div><p style={{ color: C.greenLight, fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Choose Your Adventure</p><p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>Immersive story worlds with branching choices, character growth, and a closing ritual.</p></div>
-            </button>
-            <button onClick={() => { SFX.select(); setAppMode("storytime"); }} style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(245,200,66,0.08) 100%)", border: "2px solid rgba(139,92,246,0.4)", borderRadius: 16, padding: "24px 20px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.25s", display: "flex", gap: 16, alignItems: "center" }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(139,92,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ fontSize: 28 }}>🌙</span></div>
-              <div><p style={{ color: "#a78bfa", fontWeight: 700, margin: "0 0 4px", fontSize: 20 }}>Storytime</p><p style={{ color: C.creamDim, margin: 0, fontSize: 13, lineHeight: 1.5 }}>Sit back and listen. No choices, just a beautiful story read aloud.</p></div>
-            </button>
-            <div style={{ textAlign: "center", marginTop: 8 }}>
-              <span style={{ color: C.textDim, fontSize: 11, letterSpacing: 1 }}>Using {PROVIDERS.find(p => p.id === provider)?.label || provider}</span>
-              {parentPin && <button onClick={() => { setPinAction("unlock"); setShowPinSetup(true); }} style={{ display: "block", margin: "8px auto 0", background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 8, padding: "6px 14px", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>📊 Parent Dashboard</button>}
-            </div>
-          </div>
+      <div style={{ minHeight: "100vh", background: C.ink, color: C.cream, fontFamily: "'Playfair Display', Georgia, serif", overflowX: "hidden", position: "relative" }}>
+        <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+          <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 900, height: 700, background: "radial-gradient(ellipse 60% 55% at 50% 30%, rgba(212,92,26,0.22) 0%, rgba(180,60,10,0.10) 40%, transparent 70%)", filter: "blur(2px)" }} />
+          <div style={{ position: "absolute", top: "22%", left: "50%", transform: "translateX(-50%)", width: 600, height: 300, background: "radial-gradient(ellipse 50% 40% at 50% 50%, rgba(245,200,66,0.09) 0%, transparent 70%)" }} />
+          <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", height: 300, background: "linear-gradient(to top, rgba(5,14,7,0.95) 0%, transparent 100%)" }} />
         </div>
+        <nav style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(245,200,66,0.08)", background: "rgba(5,14,7,0.7)", backdropFilter: "blur(12px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 22 }}>✦</span>
+            <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 0.3, background: `linear-gradient(90deg, ${C.cream} 0%, ${C.gold} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Storyverse AI</span>
+          </div>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            {childMode && <span style={{ background: "rgba(30,107,53,0.3)", color: "#2d9e52", fontSize: 10, padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>🔒 CHILD</span>}
+            <button onClick={toggleChildMode} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{childMode ? "🔒" : "🔓"}</button>
+            <button onClick={() => setMuted(m => !m)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>{muted ? "🔇" : "🔊"}</button>
+            <button onClick={() => setShowKeySetup(true)} style={{ background: "none", border: "none", color: C.creamDim, fontSize: 18, cursor: "pointer", padding: 4 }}>🔑</button>
+          </div>
+        </nav>
+        <main style={{ position: "relative", zIndex: 5, maxWidth: 1060, margin: "0 auto", padding: "0 24px 80px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <section style={{ textAlign: "center", padding: "90px 24px 60px", maxWidth: 780 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,200,66,0.09)", border: "1px solid rgba(245,200,66,0.22)", borderRadius: 100, padding: "5px 14px", marginBottom: 32 }}>
+              <span style={{ fontSize: 12 }}>✦</span>
+              <span style={{ color: C.gold, fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 700 }}>AI-Powered Family Storytelling</span>
+            </div>
+            <h1 style={{ fontSize: "clamp(38px, 8vw, 68px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: -1.5, margin: "0 0 22px", color: C.cream }}>Stories that{" "}<span style={{ background: `linear-gradient(135deg, ${C.gold} 0%, #ffdc7a 40%, ${C.terra} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>grow with you.</span></h1>
+            <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: "clamp(15px, 2.5vw, 19px)", lineHeight: 1.65, margin: "0 auto 40px", maxWidth: 540 }}>An AI-powered storytelling app where your family becomes the heroes.</p>
+            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+              <button onClick={() => { SFX.select(); setAppMode("adventure"); }} style={{ background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldDark} 100%)`, color: "#1a0f00", border: "none", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, fontSize: 16, boxShadow: "0 6px 28px rgba(245,200,66,0.35)" }}>Start a Story</button>
+              <button onClick={() => setShowKeySetup(true)} style={{ background: "rgba(245,200,66,0.07)", color: C.gold, border: "1px solid rgba(245,200,66,0.28)", borderRadius: 14, padding: "16px 34px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 16 }}>Settings</button>
+            </div>
+          </section>
+          <div style={{ maxWidth: 500, width: "100%", marginBottom: 40 }}><DailyChallenge /></div>
+          <div style={{ width: "100%", maxWidth: 640, height: 1, background: "linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.18) 50%, transparent 100%)", marginBottom: 50 }} />
+          <section style={{ width: "100%", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+            {hModes.map(m => (
+              <div key={m.id} onClick={() => { SFX.select(); setAppMode(m.id); }} style={{ background: `linear-gradient(160deg, ${C.card} 0%, rgba(10,18,12,1) 100%)`, border: `1px solid ${C.border}`, borderRadius: 20, padding: "30px 26px 28px", cursor: "pointer", transition: "all 0.28s ease", position: "relative", overflow: "hidden", boxShadow: "0 6px 24px rgba(0,0,0,0.4)" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.borderColor = m.aborder; e.currentTarget.style.boxShadow = `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${m.glow}`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.4)"; }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 120, background: `radial-gradient(ellipse 80% 80% at 30% 0%, ${m.glow} 0%, transparent 70%)`, pointerEvents: "none", opacity: 0.5 }} />
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: `${m.accent}28`, border: `1px solid ${m.accent}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 20 }}>{m.icon}</div>
+                <h3 style={{ fontSize: 21, fontWeight: 700, margin: "0 0 10px", color: C.cream, lineHeight: 1.25, letterSpacing: -0.3 }}>{m.label}</h3>
+                <p style={{ fontStyle: "italic", color: C.creamDim, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>{m.sub}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: C.textDim, fontSize: 13, fontWeight: 700, letterSpacing: 0.3 }}><span>Begin</span><span style={{ fontSize: 15 }}>→</span></div>
+              </div>
+            ))}
+          </section>
+          <p style={{ marginTop: 56, color: C.textDim, fontSize: 12, letterSpacing: 2, textTransform: "uppercase" }}>Powered by Claude · Built for families</p>
+          {parentPin && <button onClick={() => { setPinAction("unlock"); setShowPinSetup(true); }} style={{ marginTop: 12, background: "none", border: `1px solid ${C.textDim}`, color: C.creamDim, borderRadius: 8, padding: "6px 14px", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>📊 Parent Dashboard</button>}
+        </main>
         {showKeySetup && <KeySetupOverlay provider={provider} setProvider={setProvider} apiKey={apiKey} setApiKey={setApiKey} keyInput={keyInput} setKeyInput={setKeyInput} onClose={() => setShowKeySetup(false)} onSave={(k, p) => { setApiKey(k); setProvider(p); localStorage.setItem("momah_api_key", k); localStorage.setItem("momah_provider", p); setShowKeySetup(false); }} />}
         {showPinSetup && <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:20}}><div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center"}}><p style={{color:C.gold,fontSize:18,fontWeight:700,margin:"0 0 12px"}}>{pinAction==="set"?"Set Parent PIN":"Enter PIN"}</p><p style={{color:C.creamDim,fontSize:13,margin:"0 0 16px"}}>{pinAction==="set"?"This PIN locks adult content.":"Enter your PIN to disable child mode."}</p><input value={pinInput} onChange={e=>setPinInput(e.target.value.replace(/\D/g,""))} placeholder="4+ digits" type="password" maxLength={8} style={{width:"100%",background:C.ink,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 16px",color:C.cream,fontSize:20,textAlign:"center",letterSpacing:8,boxSizing:"border-box",fontFamily:"monospace",marginBottom:16}}/><div style={{display:"flex",gap:10}}><PrimaryBtn disabled={pinInput.length<4} onClick={handlePinSubmit}>{pinAction==="set"?"Set PIN":"Unlock"}</PrimaryBtn><button onClick={()=>{setShowPinSetup(false);setPinInput("");}} style={{background:"none",border:`1px solid ${C.textDim}`,color:C.creamDim,borderRadius:12,padding:"14px 20px",cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>Cancel</button></div></div></div>}
         <GlobalStyles />
