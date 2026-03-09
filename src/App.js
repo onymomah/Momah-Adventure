@@ -372,12 +372,89 @@ function ErrorBox({ error, onRetry }) {
 // ═══════════════════════════════════════════════════════════════
 // DAILY CHALLENGE SYSTEM
 // ═══════════════════════════════════════════════════════════════
-function completeChallenge(type) {
+const CHALLENGE_POOL = {
+  battle: [
+    { id: "b1", text: "Win a battle with Wild Card enabled", check: (ctx) => ctx.wcEnabled },
+    { id: "b2", text: "Complete a Scout-length battle (3-4 beats)", check: (ctx) => ctx.battleLength === "scout" },
+    { id: "b3", text: "Complete a Legend-length battle (9+ beats)", check: (ctx) => ctx.battleLength === "legend" },
+    { id: "b4", text: "Win a battle in the Volcanic Crater arena", check: (ctx) => ctx.arena === "Volcanic Crater" },
+    { id: "b5", text: "Use Cinematic narrative density in a battle", check: (ctx) => ctx.narrativeDensity === "cinematic" },
+    { id: "b6", text: "Win a team battle", check: (ctx) => ctx.battleType === "team" },
+    { id: "b7", text: "Complete a Free For All with 4+ fighters", check: (ctx) => ctx.battleType === "ffa" },
+    { id: "b8", text: "Win a battle using Kids Junior tone", check: (ctx) => ctx.tone === "kids_young" },
+    { id: "b9", text: "Choose a Wildcard option during battle", check: (ctx) => ctx.usedWildcard },
+    { id: "b10", text: "Win a battle in under 4 beats", check: (ctx) => ctx.beatCount <= 4 },
+    { id: "b11", text: "Complete a battle in the Space Station", check: (ctx) => ctx.arena === "Space Station" },
+    { id: "b12", text: "Win with Short narrative density", check: (ctx) => ctx.narrativeDensity === "short" },
+    { id: "b13", text: "Complete a Champion-length battle", check: (ctx) => ctx.battleLength === "champion" },
+    { id: "b14", text: "Win a battle during a Lightning storm", check: (ctx) => ctx.weather === "Lightning storm" },
+    { id: "b15", text: "Complete a tournament battle", check: (ctx) => ctx.battleType === "tournament" },
+  ],
+  adventure: [
+    { id: "a1", text: "Complete a 20-minute adventure", check: (ctx) => ctx.duration === "20" },
+    { id: "a2", text: "Complete a 60-minute adventure", check: (ctx) => ctx.duration === "60" },
+    { id: "a3", text: "Earn a trait during an adventure", check: (ctx) => ctx.earnedTrait },
+    { id: "a4", text: "Find an item during an adventure", check: (ctx) => ctx.foundItem },
+    { id: "a5", text: "Play an adventure with Cinematic density", check: (ctx) => ctx.advDensity === "cinematic" },
+    { id: "a6", text: "Play as both Justina and Nathaniel together", check: (ctx) => ctx.players === "both" },
+    { id: "a7", text: "Continue a story (Chapter 2)", check: (ctx) => ctx.continued },
+    { id: "a8", text: "Complete an adventure with epic tone", check: (ctx) => ctx.tone === "epic" },
+    { id: "a9", text: "Complete an adventure with spooky tone", check: (ctx) => ctx.tone === "spooky" },
+    { id: "a10", text: "Play a group adventure (3+ players)", check: (ctx) => ctx.playerCount >= 3 },
+    { id: "a11", text: "Use Short narrative density", check: (ctx) => ctx.advDensity === "short" },
+    { id: "a12", text: "Complete an adventure with funny tone", check: (ctx) => ctx.tone === "funny" },
+    { id: "a13", text: "Earn a secret achievement", check: (ctx) => ctx.earnedSecret },
+    { id: "a14", text: "Play an adventure in a custom world", check: (ctx) => ctx.customWorld },
+    { id: "a15", text: "Continue your saga in a new world", check: (ctx) => ctx.continuedSaga },
+  ],
+  storytime: [
+    { id: "s1", text: "Listen to a story with ocean soundscape", check: (ctx) => ctx.soundscape === "ocean" },
+    { id: "s2", text: "Listen to a story with rain soundscape", check: (ctx) => ctx.soundscape === "rain" },
+    { id: "s3", text: "Complete an Extended-length story", check: (ctx) => ctx.storyLength === "long" },
+    { id: "s4", text: "Listen to a Bedtime Story", check: (ctx) => ctx.genre === "bedtime" },
+    { id: "s5", text: "Listen to a Mystery story", check: (ctx) => ctx.genre === "mystery" },
+    { id: "s6", text: "Listen to a Superhero story", check: (ctx) => ctx.genre === "superhero" },
+    { id: "s7", text: "Use the fire soundscape", check: (ctx) => ctx.soundscape === "fire" },
+    { id: "s8", text: "Listen to a Quick story", check: (ctx) => ctx.storyLength === "short" },
+    { id: "s9", text: "Generate a story in a saved world", check: (ctx) => ctx.usedWorldSeed },
+    { id: "s10", text: "Continue a story (sequel)", check: (ctx) => ctx.continued },
+    { id: "s11", text: "Listen to a Myth or Legend", check: (ctx) => ctx.genre === "myth" },
+    { id: "s12", text: "Listen to a Sports story", check: (ctx) => ctx.genre === "sports" },
+    { id: "s13", text: "Use forest soundscape", check: (ctx) => ctx.soundscape === "forest" },
+    { id: "s14", text: "Listen to an Animal Kingdom story", check: (ctx) => ctx.genre === "animals" },
+    { id: "s15", text: "Listen to a Historical story", check: (ctx) => ctx.genre === "historical" },
+  ],
+};
+
+function getDailyChallenge(date) {
+  // Seed based on date so everyone sees the same tasks each day
+  const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+  const pick = (arr, s) => arr[s % arr.length];
+  return {
+    battle: pick(CHALLENGE_POOL.battle, seed),
+    adventure: pick(CHALLENGE_POOL.adventure, seed + 7),
+    storytime: pick(CHALLENGE_POOL.storytime, seed + 13),
+  };
+}
+
+function completeChallenge(type, ctx) {
   try {
-    const c = JSON.parse(localStorage.getItem("momah_daily_challenges"));
-    if (c && c.date === new Date().toLocaleDateString()) {
-      if (!c[type]) {
-        c[type] = true;
+    const today = new Date().toLocaleDateString();
+    let c = JSON.parse(localStorage.getItem("momah_daily_challenges"));
+    if (!c || c.date !== today) return; // No challenges loaded for today
+    if (c[type]) return; // Already completed
+
+    const daily = getDailyChallenge(new Date());
+    const task = daily[type];
+    if (!task) return;
+
+    // Validate the actual task
+    if (task.check(ctx || {})) {
+      c[type] = true;
+      localStorage.setItem("momah_daily_challenges", JSON.stringify(c));
+      // Update streak only when at least one task is completed today
+      if (!c._streakCounted) {
+        c._streakCounted = true;
         localStorage.setItem("momah_daily_challenges", JSON.stringify(c));
         let s = parseInt(localStorage.getItem("momah_streaks") || "0");
         localStorage.setItem("momah_streaks", (s + 1).toString());
@@ -391,13 +468,21 @@ function DailyChallenge() {
   const [streak, setStreak] = useState(0);
   useEffect(() => {
     try {
-      const today = new Date().toLocaleDateString();
+      const today = new Date();
+      const todayStr = today.toLocaleDateString();
       let c = JSON.parse(localStorage.getItem("momah_daily_challenges"));
       let s = parseInt(localStorage.getItem("momah_streaks") || "0");
-      if (!c || c.date !== today) {
+      if (!c || c.date !== todayStr) {
+        // Check if streak should reset (missed yesterday)
         const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-        if (c && c.date === yesterday.toLocaleDateString() && (c.battle || c.adventure || c.storytime)) {} else if (c && c.date !== today) s = 0;
-        c = { date: today, battle: false, adventure: false, storytime: false, tasks: { battle: "Win a battle with Wild Card enabled", adventure: "Find the hidden ending in a 20-minute story", storytime: "Listen to a story with the ocean soundscape" } };
+        if (c && c.date === yesterday.toLocaleDateString() && (c.battle || c.adventure || c.storytime)) {
+          // Streak continues
+        } else if (c && c.date !== todayStr) {
+          s = 0; // Missed a day, reset streak
+        }
+        const daily = getDailyChallenge(today);
+        c = { date: todayStr, battle: false, adventure: false, storytime: false, _streakCounted: false,
+              tasks: { battle: daily.battle.text, adventure: daily.adventure.text, storytime: daily.storytime.text } };
         localStorage.setItem("momah_daily_challenges", JSON.stringify(c));
         localStorage.setItem("momah_streaks", s.toString());
       }
@@ -405,13 +490,17 @@ function DailyChallenge() {
     } catch {}
   }, []);
   if (!challenges) return null;
+  const completedCount = [challenges.battle, challenges.adventure, challenges.storytime].filter(Boolean).length;
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 20px", marginBottom: 16 }}>
+    <div style={{ background: C.card, border: `1px solid ${completedCount === 3 ? C.gold : C.border}`, borderRadius: 16, padding: "16px 20px", marginBottom: 16, transition: "border-color 0.3s" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <h3 style={{ color: C.gold, margin: 0, fontSize: 16, fontWeight: 700 }}>Daily Missions</h3>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(245,200,66,0.1)", padding: "4px 10px", borderRadius: 12 }}>
-          <span style={{ fontSize: 14 }}>🔥</span>
-          <span style={{ color: C.gold, fontWeight: 700, fontSize: 13 }}>{streak} Day Streak</span>
+        <div>
+          <h3 style={{ color: C.gold, margin: 0, fontSize: 16, fontWeight: 700 }}>Daily Missions</h3>
+          <p style={{ color: C.textDim, margin: "2px 0 0", fontSize: 11 }}>{completedCount}/3 completed</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: streak > 0 ? "rgba(245,200,66,0.1)" : "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: 12 }}>
+          <span style={{ fontSize: 14 }}>{streak > 0 ? "🔥" : "💤"}</span>
+          <span style={{ color: streak > 0 ? C.gold : C.textDim, fontWeight: 700, fontSize: 13 }}>{streak} Day{streak !== 1 ? "s" : ""}</span>
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -419,12 +508,13 @@ function DailyChallenge() {
           { id: "adventure", icon: "📖", label: "Adventure", task: challenges.tasks.adventure, done: challenges.adventure },
           { id: "storytime", icon: "🌙", label: "Storytime", task: challenges.tasks.storytime, done: challenges.storytime }
         ].map(m => (
-          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, opacity: m.done ? 0.5 : 1 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: m.done ? C.green : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{m.done ? "✅" : m.icon}</div>
+          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, opacity: m.done ? 0.5 : 1, transition: "opacity 0.3s" }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: m.done ? C.green : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, transition: "background 0.3s" }}>{m.done ? "✅" : m.icon}</div>
             <div style={{ flex: 1 }}><p style={{ color: C.cream, margin: 0, fontSize: 13, fontWeight: 600, textDecoration: m.done ? "line-through" : "none" }}>{m.label}</p><p style={{ color: C.textDim, margin: 0, fontSize: 11 }}>{m.task}</p></div>
           </div>
         ))}
       </div>
+      {completedCount === 3 && <div style={{ marginTop: 10, textAlign: "center", padding: "6px", background: "rgba(245,200,66,0.08)", borderRadius: 8 }}><span style={{ color: C.gold, fontSize: 12, fontWeight: 700 }}>All missions complete! See you tomorrow.</span></div>}
     </div>
   );
 }
@@ -834,7 +924,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
       if (beat.isComplete) {
         setBeats([...nb, { narrative: beat.narrative, phase: beat.phase, choiceMade: null }]);
         setResolution(beat); setScreen('resolution');
-        completeChallenge("battle");
+        completeChallenge("battle", { wcEnabled, tone, battleLength, narrativeDensity, battleType, arena: finalArena, weather, beatCount: nn, usedWildcard: [...nb].some(b => b.wasWildcard) });
         setTimeout(() => audioRef.current?.stop(), 800);
         window.speechSynthesis?.cancel(); setIsSpeaking(false);
       } else { setCurrentBeat(beat); }
@@ -1384,7 +1474,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         if (parsed.closingRitual) { saveWorldSeed({ world: worldText, tone: toneText, thread: parsed.closingRitual.thread || "", villain: "", title: worldObj?.title || customWorld || worldText, date: new Date().toLocaleDateString(), sourceMode: "adventure" }); }
         localStorage.removeItem("momah_active_session");
         setPhase("closing"); setSessionRating(0); setSessionTags([]);
-        completeChallenge("adventure");
+        completeChallenge("adventure", { duration, advDensity, players, tone: toneObj?.id || toneText, playerCount: playerList.length, customWorld: worldObj === "custom", earnedTrait: !!parsed.traitEarned, foundItem: !!parsed.itemFound, earnedSecret: (parsed.closingRitual?.secretAchievements?.length || 0) > 0, continued: continuityMode === "continue", continuedSaga: false });
       }
     } catch (e) { setError(e.message || "Something went wrong."); setRetryPayload(userMsg); }
     setLoading(false);
@@ -1795,7 +1885,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         saveWorldSeed({ ...parsed.worldSeed, title: parsed.title, date: new Date().toLocaleDateString(), sourceMode: "storytime" });
       }
       setPhase("reading");
-      completeChallenge("storytime");
+      completeChallenge("storytime", { soundscape, storyLength, genre: genre?.id, usedWorldSeed: !!worldSeed, continued: false });
     } catch (e) { setError(e.message || "Story generation failed."); }
     setLoading(false);
   }
@@ -1833,7 +1923,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
         }
         setStory(parsed); setShowAllText(false); setVisibleParas(0); setMusicActive(true); SFX.begin();
         if (parsed.worldSeed) saveWorldSeed({ ...parsed.worldSeed, title: parsed.title, date: new Date().toLocaleDateString(), sourceMode: "storytime" });
-        setPhase("reading"); completeChallenge("storytime");
+        setPhase("reading"); completeChallenge("storytime", { soundscape, storyLength, genre: genre?.id, usedWorldSeed: true, continued: true });
       } catch (e) { setError(e.message || "Story generation failed."); setPhase("setup"); }
       setLoading(false);
     })();
