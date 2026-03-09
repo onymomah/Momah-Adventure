@@ -37,13 +37,15 @@ const PROVIDERS = [
 async function callAI(provider, apiKey, model, messages, systemPrompt) {
   if (provider === "anthropic") {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
       body: JSON.stringify({ model, max_tokens: 4096, system: systemPrompt, messages }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
     if (!res.ok) throw new Error(`Claude error: ${res.status}`);
-    return data.content[0].text;
+    const text = data.content?.[0]?.text;
+    if (!text) throw new Error("Claude returned empty response. Try again.");
+    return text;
   }
   if (provider === "gemini") {
     const contents = messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
@@ -53,7 +55,9 @@ async function callAI(provider, apiKey, model, messages, systemPrompt) {
     });
     if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `Gemini error ${res.status}`); }
     const data = await res.json();
-    return data.candidates[0].content.parts[0].text;
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Gemini returned empty response. Try again.");
+    return text;
   }
   const base = provider === "deepseek" ? "https://api.deepseek.com" : "https://api.groq.com/openai";
   const path = provider === "deepseek" ? "/chat/completions" : "/v1/chat/completions";
@@ -64,34 +68,38 @@ async function callAI(provider, apiKey, model, messages, systemPrompt) {
   if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `${provider} error ${res.status}`); }
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
-  return data.choices[0].message.content;
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) throw new Error(`${provider} returned empty response. Try again.`);
+  return text;
 }
 
 // Battle Arena uses a slightly different call signature (returns parsed JSON)
 async function battleApiCall(provider, apiKey, system, messages) {
   const provObj = PROVIDERS.find(p => p.id === provider);
   let raw = '';
+  const maxTok = 2000;
   if (provider === 'anthropic') {
-    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: provObj.model, max_tokens: 1300, system, messages }) });
+    const res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: provObj.model, max_tokens: maxTok, system, messages }) });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Claude error ${res.status}`); }
     const d = await res.json(); raw = d.content?.[0]?.text || '';
   } else if (provider === 'gemini') {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provObj.model}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })), generationConfig: { maxOutputTokens: 1300 } }) });
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provObj.model}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })), generationConfig: { maxOutputTokens: maxTok } }) });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini error ${res.status}`); }
     const d = await res.json(); raw = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
   } else {
     const ep = { deepseek: 'https://api.deepseek.com/chat/completions', groq: 'https://api.groq.com/openai/v1/chat/completions' };
-    const res = await fetch(ep[provider], { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: provObj.model, max_tokens: 1300, messages: [{ role: 'system', content: system }, ...messages] }) });
+    const res = await fetch(ep[provider], { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: provObj.model, max_tokens: maxTok, messages: [{ role: 'system', content: system }, ...messages] }) });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `${provider} error ${res.status}`); }
     const d = await res.json(); raw = d.choices?.[0]?.message?.content || '';
   }
-  const clean = raw.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
-  try { return JSON.parse(clean); } catch {
-    // Try to extract JSON object from surrounding text
-    const match = clean.match(/\{[\s\S]*\}/);
-    if (match) { try { return JSON.parse(match[0]); } catch {} }
-    throw new Error('Parse error. The arena is silent. Try again.');
+  let clean = raw.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+  try { return JSON.parse(clean); } catch {}
+  const match = clean.match(/\{[\s\S]*\}/);
+  if (match) {
+    try { return JSON.parse(match[0]); } catch {}
+    try { return JSON.parse(match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch {}
   }
+  throw new Error(`Parse failed. Response start: "${raw.substring(0, 150)}..."`);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1063,7 +1071,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     try {
       const raw = await callAI(provider, apiKey, provObj.model, newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : newMessages, sysPrompt);
       const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      let parsed; try { parsed = JSON.parse(cleaned); } catch { const match = cleaned.match(/\{[\s\S]*\}/); if (match) parsed = JSON.parse(match[0]); else throw new Error("Could not parse AI response."); }
+      let parsed; try { parsed = JSON.parse(cleaned); } catch { const match = cleaned.match(/\{[\s\S]*\}/); if (match) { try { parsed = JSON.parse(match[0]); } catch { try { parsed = JSON.parse(match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch { throw new Error("AI returned invalid JSON. Tap retry."); } } } else throw new Error("AI returned no JSON. Tap retry."); }
       const assistantMsg = { role: "assistant", content: raw };
       const updatedMessages = [...newMessages, ...(newMessages.length === 0 ? [{ role: "user", content: "Begin the story." }] : []), assistantMsg];
       setMessages(updatedMessages); setBeat(parsed); setBeatCount(c => c + 1); setIsNewBeat(true); setShowAllText(false); setVisibleParas(0); SFX.next();
@@ -1424,7 +1432,25 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     try {
       const raw = await callAI(provider, apiKey, provObj.model, [{ role: "user", content: "Generate the story now." }], sysPrompt);
       const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      let parsed; try { parsed = JSON.parse(cleaned); } catch { const m = cleaned.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Could not parse story."); }
+      let parsed;
+      // Try direct parse
+      try { parsed = JSON.parse(cleaned); } catch {
+        // Try extracting JSON object
+        const m = cleaned.match(/\{[\s\S]*\}/);
+        if (m) {
+          try { parsed = JSON.parse(m[0]); } catch {
+            try { parsed = JSON.parse(m[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch {
+              // Last resort: extract fields manually with regex
+              const title = (cleaned.match(/"title"\s*:\s*"([^"]*)"/) || [])[1] || "Untitled Story";
+              const contentMatch = cleaned.match(/"content"\s*:\s*"([\s\S]*?)"\s*,\s*"mood"/);
+              const content = contentMatch ? contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"') : cleaned.length > 100 ? cleaned : null;
+              const mood = (cleaned.match(/"mood"\s*:\s*"([^"]*)"/) || [])[1] || "warm";
+              if (content) { parsed = { title, content, mood, worldSeed: { world: title, tone: mood, thread: "", villain: null } }; }
+              else { throw new Error(`Could not extract story. Raw start: "${cleaned.substring(0, 120)}..."`); }
+            }
+          }
+        } else throw new Error(`No JSON found. Raw start: "${cleaned.substring(0, 120)}..."`);
+      }
       setStory(parsed);
       setShowAllText(false); setVisibleParas(0);
       setMusicActive(true);
