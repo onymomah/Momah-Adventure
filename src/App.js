@@ -213,7 +213,7 @@ function startBattleAudio(name) {
 const KIDS_YOUNG = `You are a fun battle story narrator for kids ages 6-8. Energetic. Funny. Simple.\nShort sentences. Sound words on their own line: BOOM! CRASH! ZAP! Max 3 sentences per paragraph.\nNo scary violence. Bumps and bruises only. Win through cleverness or heart.\nTTS: sentences under 10 words during action. Ellipses for suspense. Repeat for excitement: "Faster. Faster. FASTER!"\nFREE FOR ALL / TOURNAMENT: track all named fighters, eliminate them one by one with fun moments, never skip a fighter.\nCHOICE DESIGN: 4 options. Options 1-3 fun tactical. Option 4 WILDCARD silly surprising choice with a real tradeoff. Prefix detail "WILDCARD:". Every wildcard must have a cost, risk, or unexpected side effect. Sometimes wildcards backfire hilariously.\nBEAT FLOW: Aim for 5 beats but the battle can end sooner or go longer if the story demands it. Let the narrative find its natural ending.\nRESPOND ONLY IN VALID JSON no markdown:\n{"narrative":"story text \\n for line breaks","choices":[{"id":1,"text":"3-5 word label","detail":"fun and clear"},{"id":2,"text":"label","detail":"what happens"},{"id":3,"text":"label","detail":"what happens"},{"id":4,"text":"label","detail":"WILDCARD: the unexpected silly move"}],"phase":"opening|exchange|climax|resolution","isComplete":false}\nWhen isComplete true omit choices add: "winner":"name","winReason":"2 fun sentences","victoryLine":"cool victory moment","lesson":"1-2 simple sentences"\nTEAM battles add: "mvp":{"name":"name","keyMoment":"their best moment"}`;
 const KIDS_OLDER = `You are a cinematic battle narrator for kids ages 9-12. Vivid. Fast. Fair. Smart.\nMix short punchy sentences with longer setup. Rich vocabulary ok: relentless, outmaneuvered, momentum. Real damage: bruises, fatigue, torn gear. No gore.\nVictories earned through skill strategy or environment.\nFREE FOR ALL / TOURNAMENT: track all named fighters precisely. Eliminate them dramatically in order of defeat. Give every fighter a defining moment. Never skip a fighter.\nTTS: ellipses for suspense. Em dashes for sudden shifts. Short sentence stacks during action. ONE ALL CAPS word per paragraph.\nCHOICE DESIGN: 4 options. Options 1-3 tactical. Option 4 WILDCARD risky high reward with a real downside. Prefix detail "WILDCARD:". Wildcards should have consequences: collateral damage, stamina cost, position loss, or an unpredictable reaction.\nBEAT FLOW: Aim for 6 beats but adapt to the story. End when the battle reaches its natural conclusion, whether that takes 4 beats or 8.\nRESPOND ONLY IN VALID JSON no markdown:\n{"narrative":"story text \\n for dramatic line breaks","choices":[{"id":1,"text":"3-6 word label","detail":"tactical consequence"},{"id":2,"text":"label","detail":"consequence"},{"id":3,"text":"label","detail":"consequence"},{"id":4,"text":"label","detail":"WILDCARD: high-risk consequence"}],"phase":"opening|exchange|climax|resolution","isComplete":false}\nWhen isComplete true omit choices add: "winner":"name","winReason":"2 sentences","victoryLine":"one line or action","lesson":"2-3 sentences"\nTEAM battles add: "mvp":{"name":"name","keyMoment":"decisive contribution"}`;
 const INTENSE = `You are an interactive battle narrator. Cinematic. Visceral. Strategy decides. Environment fights back. Ages 13+.\nReal damage visible. No gore. Earned victories only.\nTTS: ellipses for pauses. Em dashes for sudden shifts. Colons before impact. Short sentence stacks under 8 words. ONE ALL CAPS per paragraph. Sound effects isolated lines. Sentences under 15 words during action.\nFREE FOR ALL / TOURNAMENT: Track every named fighter. Eliminate one per beat dramatically, building toward a final confrontation. Every elimination gets its own moment. Never skip a fighter.\nSTRUCTURAL: min 4 exchanges, 2 tactical shifts, 2 environmental interactions, 1 stamina cost per side.\nWILD CARD: if present intervene every 2 beats with chaos or no-win moments.\nCHOICE DESIGN: 4 options. Options 1-3 tactical. Option 4 WILDCARD prefix detail "WILDCARD:". Every wildcard carries real consequence: stamina drain, positional sacrifice, environmental backlash, or opening a vulnerability. Some wildcards should backfire completely.\nBEAT FLOW: Aim for 6 beats but let the battle breathe. End when the story demands it. Some fights end in 4 beats, some in 9.\nRESPOND ONLY IN VALID JSON no markdown:\n{"narrative":"story text \\n for line breaks","choices":[{"id":1,"text":"3-6 word label","detail":"tactical consequence"},{"id":2,"text":"label","detail":"consequence"},{"id":3,"text":"label","detail":"consequence"},{"id":4,"text":"label","detail":"WILDCARD: unpredictable high-risk"}],"phase":"opening|exchange|climax|resolution","isComplete":false}\nWhen isComplete true omit choices add: "winner":"name","winReason":"2 sentences","victoryLine":"one line or action","lesson":"2-3 sentences"\nTEAM battles add: "mvp":{"name":"name","keyMoment":"decisive contribution"}`;
-const BRUTAL = `You are a TERMINAL REPORT narrator. Forensic. Clinical. Every sentence is data. Observable external only.\nFORBIDDEN: Em dashes. Parentheses. Semicolons. Exclamation points. More than ONE cap per paragraph. Action paragraphs over 3 sentences. Internal emotions.\nFORENSIC TOOLKIT: Three-dot pause (...). Hard stop (.). Colon causality (:). Short sentence stacks. ONE CAP WORD per paragraph. Isolated line breaks. Contrastive juxtaposition. Three-beat degradation. Diagnostic questions. Catechism Q&A. Sound as data [Material]+[Process]=[Consequence]. Passive voice when fighter loses agency.\nFREE FOR ALL / TOURNAMENT: Each elimination is a data point. Document each fighter's Central Dogma then its failure. Build to last combatant through systematic collapse. Every fighter must be accounted for.\nBEAT STRUCTURE: Beats 1-2 establish Central Dogma. Beats 3-4 expose crack. Beat 5 Will's Threshold. Beat 6 Defining Moment.\nWILD CARD: applies aberrant pressure as Complicating Variable.\nCHOICE DESIGN: 4 options. Options 1-3 test central belief with existential cost. Option 4 WILDCARD violates doctrine prefix "WILDCARD:"\nRESPOND ONLY IN VALID JSON no markdown:\n{"narrative":"forensic text \\n for isolated line breaks","choices":[{"id":1,"text":"3-6 word label","detail":"existential cost"},{"id":2,"text":"label","detail":"cost"},{"id":3,"text":"label","detail":"cost"},{"id":4,"text":"label","detail":"WILDCARD: unknowable consequence"}],"phase":"premortem|exchange|threshold|execution|residual","isComplete":false}\nWhen isComplete true omit choices add: "winner":"name","definingMoment":"exact inversion one sentence","indifferentLaw":"universal principle 2 sentences","scaredInstrument":{"name":"one victor-side character","sacrifice":"existential cost one sentence"},"hollowLine":"epitaph not boast"`;
+const BRUTAL = `You are a TERMINAL REPORT narrator. Forensic. Clinical. Every sentence is data. Observable external only.\nALWAYS use the fighters' real names. Never use "Subject A" or "Subject B" or any clinical designations. The forensic tone comes from the prose style, not from dehumanizing the names.\nFORBIDDEN: Em dashes. Parentheses. Semicolons. Exclamation points. More than ONE cap per paragraph. Action paragraphs over 3 sentences. Internal emotions. The labels "Subject A" and "Subject B".\nFORENSIC TOOLKIT: Three-dot pause (...). Hard stop (.). Colon causality (:). Short sentence stacks. ONE CAP WORD per paragraph. Isolated line breaks. Contrastive juxtaposition. Three-beat degradation. Diagnostic questions. Catechism Q&A. Sound as data [Material]+[Process]=[Consequence]. Passive voice when fighter loses agency.\nFREE FOR ALL / TOURNAMENT: Each elimination is a data point. Document each fighter's Central Dogma then its failure. Build to last combatant through systematic collapse. Every fighter must be accounted for.\nBEAT STRUCTURE: Beats 1-2 establish Central Dogma. Beats 3-4 expose crack. Beat 5 Will's Threshold. Beat 6 Defining Moment.\nWILD CARD: applies aberrant pressure as Complicating Variable.\nCHOICE DESIGN: 4 options. Options 1-3 test central belief with existential cost. Option 4 WILDCARD violates doctrine prefix "WILDCARD:"\nRESPOND ONLY IN VALID JSON no markdown:\n{"narrative":"forensic text \\n for isolated line breaks","choices":[{"id":1,"text":"3-6 word label","detail":"existential cost"},{"id":2,"text":"label","detail":"cost"},{"id":3,"text":"label","detail":"cost"},{"id":4,"text":"label","detail":"WILDCARD: unknowable consequence"}],"phase":"premortem|exchange|threshold|execution|residual","isComplete":false}\nWhen isComplete true omit choices add: "winner":"name","definingMoment":"exact inversion one sentence","indifferentLaw":"universal principle 2 sentences","scaredInstrument":{"name":"one victor-side character","sacrifice":"existential cost one sentence"},"hollowLine":"epitaph not boast"`;
 
 function getBattleToneSystem(tone) { if (tone === 'kids_young') return KIDS_YOUNG; if (tone === 'kids_older') return KIDS_OLDER; if (tone === 'brutal') return BRUTAL; return INTENSE; }
 function getMaxBeats(tone) { return tone === 'kids_young' ? 5 : 6; }
@@ -358,6 +358,20 @@ function buildSystemPrompt({ playerList, characterChoices, world, tone, duration
 // ═══════════════════════════════════════════════════════════════
 // SHARED UI COMPONENTS
 // ═══════════════════════════════════════════════════════════════
+function VoicePicker({ selectedVoice, setSelectedVoice, availableVoices, accentColor }) {
+  if (!availableVoices || availableVoices.length === 0) return null;
+  const ac = accentColor || C.gold;
+  return (
+    <div style={{ marginTop: 8 }}>
+      <p style={{ color: ac, fontSize: 12, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Narrator Voice</p>
+      <select value={selectedVoice?.name || ''} onChange={e => { const v = availableVoices.find(x => x.name === e.target.value); setSelectedVoice(v || null); localStorage.setItem("momah_voice", v?.name || ""); if (v) { const u = new SpeechSynthesisUtterance("Ready."); u.voice = v; u.rate = 0.9; window.speechSynthesis?.speak(u); } }} style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px", color: C.cream, fontSize: 13, fontFamily: "inherit", appearance: "none", cursor: "pointer" }}>
+        <option value="">Default voice</option>
+        {availableVoices.map(v => <option key={v.name} value={v.name}>{v.name.replace(/Microsoft |Google |Apple /, '')}</option>)}
+      </select>
+    </div>
+  );
+}
+
 function PrimaryBtn({ onClick, children, disabled, style }) {
   return <button onClick={onClick} disabled={disabled} style={{ background: disabled ? C.textDim : `linear-gradient(135deg, ${C.green} 0%, #2a8f48 100%)`, color: C.cream, border: "none", borderRadius: 12, padding: "14px 28px", fontSize: 16, fontWeight: 600, cursor: disabled ? "not-allowed" : "pointer", width: "100%", opacity: disabled ? 0.5 : 1, transition: "all 0.2s", fontFamily: "inherit", ...style }}>{children}</button>;
 }
@@ -529,6 +543,9 @@ export default function App() {
   const [keyInput, setKeyInput] = useState("");
   const [showKeySetup, setShowKeySetup] = useState(false);
   const [muted, setMuted] = useState(() => localStorage.getItem("momah_mute") === "true");
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  useEffect(() => { const load = () => { const v = window.speechSynthesis?.getVoices() || []; if (v.length) { setAvailableVoices(v.filter(x => x.lang.startsWith('en'))); const saved = localStorage.getItem("momah_voice"); if (saved) { const match = v.find(x => x.name === saved); if (match) setSelectedVoice(match); } } }; load(); window.speechSynthesis?.addEventListener?.('voiceschanged', load); return () => window.speechSynthesis?.removeEventListener?.('voiceschanged', load); }, []);
   const [appMode, setAppMode] = useState(null); // null | "battle" | "adventure"
   const [phase, setPhase] = useState("setup_key"); // starts at key setup
   // Parental Controls
@@ -612,15 +629,15 @@ export default function App() {
   }
 
   if (appMode === "battle") {
-    return <BattleArenaMode provider={provider} apiKey={apiKey} muted={muted} setMuted={setMuted} childMode={childMode} onBack={() => { setAppMode(null); setPhase("setup_mode"); }} />;
+    return <BattleArenaMode provider={provider} apiKey={apiKey} muted={muted} setMuted={setMuted} childMode={childMode} selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice} availableVoices={availableVoices} onBack={() => { setAppMode(null); setPhase("setup_mode"); }} />;
   }
 
   if (appMode === "adventure") {
-    return <AdventureMode provider={provider} apiKey={apiKey} muted={muted} setMuted={setMuted} childMode={childMode} onBack={() => { setAppMode(null); setPhase("setup_mode"); }} />;
+    return <AdventureMode provider={provider} apiKey={apiKey} muted={muted} setMuted={setMuted} childMode={childMode} selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice} availableVoices={availableVoices} onBack={() => { setAppMode(null); setPhase("setup_mode"); }} />;
   }
 
   if (appMode === "storytime") {
-    return <StorytimeMode provider={provider} apiKey={apiKey} muted={muted} setMuted={setMuted} childMode={childMode} onBack={() => { setAppMode(null); setPhase("setup_mode"); }} />;
+    return <StorytimeMode provider={provider} apiKey={apiKey} muted={muted} setMuted={setMuted} childMode={childMode} selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice} availableVoices={availableVoices} onBack={() => { setAppMode(null); setPhase("setup_mode"); }} />;
   }
 
   return null;
@@ -726,7 +743,7 @@ function GlobalStyles() {
 // ═══════════════════════════════════════════════════════════════
 // BATTLE ARENA MODE (full self-contained component)
 // ═══════════════════════════════════════════════════════════════
-function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack }) {
+function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, selectedVoice, setSelectedVoice, availableVoices, onBack }) {
   const [screen, setScreen] = useState('tone');
   const [tone, setTone] = useState('');
   const [battleLength, setBattleLength] = useState('hero'); // scout|hero|champion|legend
@@ -768,8 +785,6 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   const [showAllCinematic, setShowAllCinematic] = useState(false);
   const [cinematicFormat, setCinematicFormat] = useState('1v1');
   const [sessionRating, setSessionRating] = useState(0);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  const [availableVoices, setAvailableVoices] = useState([]);
   const [battleMusic, setBattleMusic] = useState('arena');
   const [battleReadingLevel, setBattleReadingLevel] = useState(null);
   const [narrativeDensity, setNarrativeDensity] = useState('quest'); // short|quest|cinematic
@@ -779,7 +794,6 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [beats, currentBeat, loading, resolution]);
   useEffect(() => { if (!loading && !forgeLoading) return; const t = setInterval(() => setDots(d => (d % 3) + 1), 500); return () => clearInterval(t); }, [loading, forgeLoading]);
   useEffect(() => () => { audioRef.current?.stop(); window.speechSynthesis?.cancel(); }, []);
-  useEffect(() => { const load = () => { const v = window.speechSynthesis?.getVoices() || []; if (v.length) setAvailableVoices(v.filter(x => x.lang.startsWith('en'))); }; load(); window.speechSynthesis?.addEventListener?.('voiceschanged', load); return () => window.speechSynthesis?.removeEventListener?.('voiceschanged', load); }, []);
 
   const finalArena = arena === 'custom' ? customArena : arena;
   const isKids = tone === 'kids_young' || tone === 'kids_older';
@@ -885,12 +899,25 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
     const msg = `Write the complete battle.\n${fighterBlock}${wcLine}\nARENA: ${finalArena}\nCONDITIONS: ${weather}\nWIN CONDITION: ${objective}`;
     try {
       const raw = await callAI(provider, apiKey, PROVIDERS.find(p => p.id === provider).model, [{ role: 'user', content: msg }], sysPrompt);
-      const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
       let parsed;
-      try { parsed = JSON.parse(cleaned); } catch {
-        const m = cleaned.match(/\{[\s\S]*\}/);
-        if (m) { try { parsed = JSON.parse(m[0]); } catch { parsed = { title: 'The Battle', content: cleaned.length > 100 ? cleaned : 'Story generation failed.', winner: '?', summary: '' }; } }
-        else { parsed = { title: 'The Battle', content: cleaned.length > 100 ? cleaned : 'Story generation failed.', winner: '?', summary: '' }; }
+      try {
+        parsed = parseAIJson(raw);
+      } catch {
+        // Last resort: try to extract content manually
+        const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+        const titleMatch = cleaned.match(/"title"\s*:\s*"([^"]*)"/);
+        const winnerMatch = cleaned.match(/"winner"\s*:\s*"([^"]*)"/);
+        const summaryMatch = cleaned.match(/"summary"\s*:\s*"([^"]*)"/);
+        const contentMatch = cleaned.match(/"content"\s*:\s*"([\s\S]*?)"\s*,\s*"winner"/);
+        if (contentMatch) {
+          parsed = { title: titleMatch?.[1] || 'The Battle', content: contentMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"'), winner: winnerMatch?.[1] || '?', summary: summaryMatch?.[1] || '' };
+        } else {
+          parsed = { title: 'The Battle', content: cleaned.length > 100 ? cleaned : 'Story generation failed.', winner: '?', summary: '' };
+        }
+      }
+      // Ensure content has real newlines, not escaped ones
+      if (parsed.content && parsed.content.includes('\\n')) {
+        parsed.content = parsed.content.replace(/\\n/g, '\n');
       }
       setCinematicStory(parsed);
       // Save world seed from cinematic battle
@@ -899,7 +926,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   };
 
   // Cinematic typewriter
-  useEffect(() => { if (!cinematicStory || showAllCinematic) return; const paras = cinematicStory.content.split(/\n+/).filter(Boolean); setCinematicParas(0); let i = 0; const iv = setInterval(() => { i++; if (i >= paras.length) clearInterval(iv); setCinematicParas(i + 1); }, 1200); return () => clearInterval(iv); }, [cinematicStory, showAllCinematic]);
+  useEffect(() => { if (!cinematicStory || showAllCinematic) return; const text = (cinematicStory.content || '').replace(/\\n/g, '\n'); const paras = text.split(/\n+/).filter(Boolean); setCinematicParas(0); let i = 0; const iv = setInterval(() => { i++; if (i >= paras.length) clearInterval(iv); setCinematicParas(i + 1); }, 1200); return () => clearInterval(iv); }, [cinematicStory, showAllCinematic]);
 
   const handleChoice = async (choice) => {
     if (!currentBeat || loading) return;
@@ -1024,7 +1051,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
           {/* Voice picker */}
           {availableVoices.length > 0 && <div style={{ marginBottom: '16px', textAlign: 'left' }}>
             <Lbl c="NARRATOR VOICE" />
-            <select value={selectedVoice?.name || ''} onChange={e => { const v = availableVoices.find(x => x.name === e.target.value); setSelectedVoice(v || null); if (v) { const u = new SpeechSynthesisUtterance('Ready to fight.'); u.voice = v; u.rate = 0.9; window.speechSynthesis?.speak(u); } }} style={{ ...inp, appearance: 'none', cursor: 'pointer' }}>
+            <select value={selectedVoice?.name || ''} onChange={e => { const v = availableVoices.find(x => x.name === e.target.value); setSelectedVoice(v || null); localStorage.setItem("momah_voice", v?.name || ""); if (v) { const u = new SpeechSynthesisUtterance('Ready.'); u.voice = v; u.rate = 0.9; window.speechSynthesis?.speak(u); } }} style={{ ...inp, appearance: 'none', cursor: 'pointer' }}>
               <option value="">Default voice</option>
               {availableVoices.map(v => <option key={v.name} value={v.name}>{v.name.replace(/Microsoft |Google |Apple /, '')}</option>)}
             </select>
@@ -1250,7 +1277,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
   // STORY + RESOLUTION
   // CINEMATIC SCREEN
   if (screen === 'cinematic') {
-    const paras = cinematicStory ? cinematicStory.content.split(/\n+/).filter(Boolean) : [];
+    const paras = cinematicStory ? (cinematicStory.content || '').replace(/\\n/g, '\n').split(/\n+/).filter(Boolean) : [];
     const allRevealed = showAllCinematic || cinematicParas >= paras.length;
     return (
       <div style={{ background: 'linear-gradient(180deg, #0a0a1a 0%, #0f0818 100%)', minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: S, color: '#e0d8f0' }}>
@@ -1362,7 +1389,7 @@ function BattleArenaMode({ provider, apiKey, muted, setMuted, childMode, onBack 
 // ═══════════════════════════════════════════════════════════════
 // ADVENTURE MODE (full self-contained component)
 // ═══════════════════════════════════════════════════════════════
-function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack }) {
+function AdventureMode({ provider, apiKey, muted, setMuted, childMode, selectedVoice, setSelectedVoice, availableVoices, onBack }) {
   const [phase, setPhase] = useState("setup_player");
   const [players, setPlayers] = useState(null);
   const [playerList, setPlayerList] = useState([]);
@@ -1502,7 +1529,7 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     setWorldObj(null); setCustomWorld(""); setToneObj(null); setCustomTone(""); setDuration(null); setAdvDensity("quest");
     setPhase("setup_world"); generateWorlds();
   }
-  function speak(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/\n/g, " ")); u.rate = 0.92; u.pitch = 1.05; window.speechSynthesis.speak(u); }
+  function speak(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/\n/g, " ")); u.rate = 0.92; u.pitch = 1.05; if (selectedVoice) u.voice = selectedVoice; window.speechSynthesis.speak(u); }
   function stopSpeak() { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); }
 
   const shell = (title, children, showBack, onBackFn) => (
@@ -1713,8 +1740,9 @@ function AdventureMode({ provider, apiKey, muted, setMuted, childMode, onBack })
       </>}
       <p style={{ color: C.creamDim, fontSize: 14, margin: "12px 0 4px" }}>Ambient music:</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
-        {[{ id: "none", label: "None", emoji: "🔇" }, { id: "epic", label: "Drums", emoji: "🥁" }, { id: "spooky", label: "Dark", emoji: "🌲" }, { id: "playful", label: "Bells", emoji: "🔔" }, { id: "warm", label: "Calm", emoji: "🌅" }, { id: "african", label: "Igbo", emoji: "🪘" }].map(m => <button key={m.id} onClick={() => { SFX.select(); setMusicTrack(m.id); }} style={{ background: musicTrack === m.id ? "rgba(245,200,66,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${musicTrack === m.id ? C.gold : C.border}`, borderRadius: 10, padding: "10px 4px", cursor: "pointer", textAlign: "center", fontFamily: "inherit" }}><span style={{ fontSize: 24, display: "block" }}>{m.emoji}</span><span style={{ color: musicTrack === m.id ? C.gold : C.creamDim, fontSize: 10, display: "block", marginTop: 4 }}>{m.label}</span></button>)}
+        {[{ id: "none", emoji: "🔇" }, { id: "epic", emoji: "🥁" }, { id: "spooky", emoji: "🌲" }, { id: "playful", emoji: "🔔" }, { id: "warm", emoji: "🌅" }, { id: "african", emoji: "🪘" }].map(m => <button key={m.id} onClick={() => { SFX.select(); setMusicTrack(m.id); }} style={{ background: musicTrack === m.id ? "rgba(245,200,66,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${musicTrack === m.id ? C.gold : C.border}`, borderRadius: 10, padding: "10px 4px", cursor: "pointer", textAlign: "center", fontFamily: "inherit" }}><span style={{ fontSize: 24, display: "block" }}>{m.emoji}</span></button>)}
       </div>
+      <VoicePicker selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice} availableVoices={availableVoices} accentColor={C.gold} />
       <PrimaryBtn disabled={!duration} onClick={startStory} style={{ marginTop: 16 }}>Begin the Adventure</PrimaryBtn>
     </div>
   ), true, () => setPhase("setup_tone"));
@@ -1807,7 +1835,7 @@ const STORYTIME_LENGTHS = [
   { id: "long", label: "Extended (12 min)", words: "1400-1800 words" },
 ];
 
-function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack }) {
+function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedVoice, setSelectedVoice, availableVoices, onBack }) {
   const [phase, setPhase] = useState("setup");
   const [listenerName, setListenerName] = useState("");
   const [listenerAge, setListenerAge] = useState("");
@@ -1850,7 +1878,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
     return () => clearInterval(iv);
   }, [story, showAllText]);
 
-  function speak(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/\n/g, " ")); u.rate = 0.85; u.pitch = 1.0; u.onstart = () => setIsSpeaking(true); u.onend = () => setIsSpeaking(false); u.onerror = () => setIsSpeaking(false); window.speechSynthesis.speak(u); }
+  function speak(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/\n/g, " ")); u.rate = 0.85; u.pitch = 1.0; if (selectedVoice) u.voice = selectedVoice; u.onstart = () => setIsSpeaking(true); u.onend = () => setIsSpeaking(false); u.onerror = () => setIsSpeaking(false); window.speechSynthesis.speak(u); }
   function stopSpeak() { window.speechSynthesis?.cancel(); setIsSpeaking(false); }
 
   async function generateStory() {
@@ -2032,6 +2060,8 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, onBack })
 
         {/* iOS advisory */}
         {/iPad|iPhone|iPod/.test(navigator.userAgent) && <p style={{ color: C.textDim, fontSize: 11, margin: "4px 0 0", fontStyle: "italic" }}>Note: On iPhone/iPad, the screen must stay on for Read Aloud to continue.</p>}
+
+        <VoicePicker selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice} availableVoices={availableVoices} accentColor="#a78bfa" />
 
         {error && <ErrorBox error={error} onRetry={generateStory} />}
         <PrimaryBtn disabled={!genre || !listenerAge || loading} onClick={generateStory} style={{ marginTop: 8, background: loading ? C.textDim : "linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)" }}>
