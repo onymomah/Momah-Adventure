@@ -425,18 +425,18 @@ const CHALLENGE_POOL = {
     { id: "s1", text: "Listen to a story with ocean soundscape", check: (ctx) => ctx.soundscape === "ocean" },
     { id: "s2", text: "Listen to a story with rain soundscape", check: (ctx) => ctx.soundscape === "rain" },
     { id: "s3", text: "Complete an Extended-length story", check: (ctx) => ctx.storyLength === "long" },
-    { id: "s4", text: "Listen to a Bedtime Story", check: (ctx) => ctx.genre === "bedtime" },
-    { id: "s5", text: "Listen to a Mystery story", check: (ctx) => ctx.genre === "mystery" },
-    { id: "s6", text: "Listen to a Superhero story", check: (ctx) => ctx.genre === "superhero" },
+    { id: "s4", text: "Play a Spots & Pointy story", check: (ctx) => ctx.character === "spots_pointy" },
+    { id: "s5", text: "Play a HummingJagmeleon story", check: (ctx) => ctx.character === "hjg" },
+    { id: "s6", text: "Play a Prickle story", check: (ctx) => ctx.character === "prickle" },
     { id: "s7", text: "Use the fire soundscape", check: (ctx) => ctx.soundscape === "fire" },
     { id: "s8", text: "Listen to a Quick story", check: (ctx) => ctx.storyLength === "short" },
     { id: "s9", text: "Generate a story in a saved world", check: (ctx) => ctx.usedWorldSeed },
     { id: "s10", text: "Continue a story (sequel)", check: (ctx) => ctx.continued },
-    { id: "s11", text: "Listen to a Myth or Legend", check: (ctx) => ctx.genre === "myth" },
-    { id: "s12", text: "Listen to a Sports story", check: (ctx) => ctx.genre === "sports" },
+    { id: "s11", text: "Play a Zola story", check: (ctx) => ctx.character === "zola" },
+    { id: "s12", text: "Play a Cackle & Snort story", check: (ctx) => ctx.character === "cackle_snort" },
     { id: "s13", text: "Use forest soundscape", check: (ctx) => ctx.soundscape === "forest" },
-    { id: "s14", text: "Listen to an Animal Kingdom story", check: (ctx) => ctx.genre === "animals" },
-    { id: "s15", text: "Listen to a Historical story", check: (ctx) => ctx.genre === "historical" },
+    { id: "s14", text: "Play a Digs story", check: (ctx) => ctx.character === "digs" },
+    { id: "s15", text: "Play a Stretch story", check: (ctx) => ctx.character === "stretch" },
   ],
 };
 
@@ -1814,19 +1814,111 @@ function getWorldSeeds() { return getLS("momah_world_seeds") || []; }
 // ═══════════════════════════════════════════════════════════════
 // STORYTIME MODE
 // ═══════════════════════════════════════════════════════════════
-const STORYTIME_GENRES = [
-  { id: "bedtime", label: "Bedtime Story", emoji: "🌙", desc: "Calm, warm, settling. Perfect for winding down." },
-  { id: "fairy", label: "Fairy Tale", emoji: "🧚", desc: "Magic, wonder, and a lesson wrapped in beauty." },
-  { id: "adventure", label: "Adventure", emoji: "🗺️", desc: "A journey with a beginning, middle, and end." },
-  { id: "funny", label: "Silly Story", emoji: "🤪", desc: "Goofy characters, unexpected twists, lots of laughs." },
-  { id: "myth", label: "Myth or Legend", emoji: "🐉", desc: "Ancient heroes, gods, and the stories that shaped worlds." },
-  { id: "real", label: "Inspired by Real Life", emoji: "🌍", desc: "Based on real places, people, or events. Made magical." },
-  { id: "mystery", label: "Mystery", emoji: "🔍", desc: "Clues, suspects, and a puzzle to solve before the end." },
-  { id: "superhero", label: "Superhero", emoji: "🦸", desc: "Powers awaken. A villain rises. Only one hero can stop them." },
-  { id: "sports", label: "Sports", emoji: "🏆", desc: "The big game, the underdog, and the moment everything changes." },
-  { id: "animals", label: "Animal Kingdom", emoji: "🦁", desc: "The wild has its own rules. Animals with voices and courage." },
-  { id: "historical", label: "Historical", emoji: "🏛️", desc: "Real eras, real cultures. History brought to life with story." },
-  { id: "custom", label: "Your Own Idea", emoji: "✨", desc: "Describe any genre or theme. The AI builds it for you." },
+const SPEEDSTOMPER_CHARACTERS = [
+  { id: "spots_pointy", icon: "🐆🦏", label: "Spots & Pointy", tagline: "The fastest scout and the steadiest rhino. Together, nothing stops them.", group: "duo",
+    world: "The Bright Savannah, around Baobab Base. Red-dirt trails, hidden watering holes, shady acacia groves, and the Rumble Hills.",
+    profile: `Spots is pure energy, curious, bold, always running. He spots trouble from half a mile away and is halfway there before thinking. Pointy is the anchor: calm, deliberate, thinks before acting. Together they balance chaos and calm. Spots leaves a dust cloud shaped like his face when he runs. Pointy politely apologizes to things before smashing them ("Sorry about this, rock.").`,
+    friends: "HummingJagmeleon (stealth recon), Digs (underground expert), Prickle (inventor), Digby (tunnel scout), Stretch (lookout), Swoop (messenger), Nuru (builder), Zola (wise elephant historian).",
+    villains: "Cackle and Snort the hyena brothers (goofy schemers, never truly dangerous). Snap the Crocodile and the Sludge-Trudgers (cheating rival team).",
+    tone: "High-energy adventure with heart and humor. Fast-paced but always lands on friendship and teamwork.",
+    hooks: ["Spots drinks too much Fizz-Berry juice and vibrates so fast he can't control his legs. Pointy has to carry him on a mission.", "A stampede is heading for Baobab Base. Spots scouts while Pointy holds the line.", "Spots challenges himself to go a full day without running. By noon he's climbed every tree in sight.", "Pointy loses his favorite thinking rock and can't come up with a plan without it.", "Cackle and Snort set a trap that catches Spots. Pointy has to rescue him using patience, not speed."],
+    always: "Spots always says 'I'll race ahead and check it out!' and Pointy always sighs. Spots bounces on his toes when standing still. Pointy checks on everyone after missions. Spots asks too many questions without waiting for answers.",
+    never: "Never make Spots arrogant about his speed. Never make Pointy dumb or slow-witted. Never have either solve a problem without needing the other." },
+  { id: "hjg", icon: "🌈", label: "HummingJagmeleon", tagline: "You won't see me coming. You won't see me going. But you'll know I was there.", group: "squad",
+    world: "The hidden spaces of the Bright Savannah. Behind waterfalls, inside dense thickets, high in unreachable branches.",
+    profile: "HJG is the team's quiet heart. Hummingbird wings, jaguar markings, chameleon tail. She speaks rarely, observes constantly, and notices everything. She can turn invisible by shifting colors. She glitches bright pink when embarrassed or surprised. Her tail curls when curious. She hovers when thinking.",
+    friends: "Spots (finds his energy exhausting but secretly charming), Pointy (they sit in comfortable silence), Prickle, Digs.",
+    villains: "Cackle and Snort never see her coming. She gathers intel on their schemes before anyone else knows.",
+    tone: "Mysterious, calm, slightly magical. Quiet and observant.",
+    hooks: ["HJG's color shift gets stuck on bright pink while scouting the hyena den. She has to complete the mission looking like a walking flower.", "HJG tries to teach Spots to move silently. He lasts four seconds.", "HJG's wings get tangled in vines during a storm. She has to let the team rescue her for once.", "A young animal gets lost and HJG is the only one patient enough to track it through dense thicket."],
+    always: "Speaks in short sentences, rarely more than a few words. Appears and disappears silently. Lets out a soft humming trill before vanishing.",
+    never: "Never make her talk a lot. Never have her fail at stealth without good reason. Never make her feel bad about being different." },
+  { id: "digs", icon: "🐜", label: "Digs the Aardvark", tagline: "If you need to get under it, around it, or out from under it, I'm your aardvark.", group: "squad",
+    world: "Underground. Tunnel networks connecting Baobab Base, Rumble Hills, Glimmering Waterholes, and secret exits near hyena territory.",
+    profile: "Digs is shy above ground and brave below it. Humble, soft-spoken, uncomfortable with attention. But when someone's trapped, he transforms into the most focused digger in the savannah. He blinks in sunlight like it personally offends him. Carries a small pouch of digging snacks. Gets nervous in wide-open spaces.",
+    friends: "Pointy (feels safe with him), Prickle (she built him a headlamp, he treasures it), HJG (they share quietness), Digby (tunneling partner).",
+    villains: "Cackle and Snort sometimes fall into his tunnels by accident. He's always annoyed when he has to fill them in again.",
+    tone: "Gentle, humble, quietly heroic. Cozy underground feel.",
+    hooks: ["A collapsed tunnel traps a family of ground squirrels. Digs has to dig them out while the team keeps predators away.", "Digs discovers an underground river that could solve the dry-season water problems.", "Spots tries to learn digging. He gets one paw in and gives up. 'HOW DO YOU SEE DOWN HERE?'", "Cackle and Snort find one of Digs's tunnel entrances and sneak into Baobab Base."],
+    always: "Mutters to himself while digging: 'Left a little. Rock coming. Push through.' Pops up in unexpected places.",
+    never: "Never make him brave above ground without good reason. Never have him forget his tunnel maps. Never make him talk a lot in groups." },
+  { id: "prickle", icon: "🦔", label: "Prickle the Porcupine", tagline: "Got a problem? Give me sticks, vines, and five minutes. I'll build you a solution.", group: "squad",
+    world: "The workshop clearing near Baobab Base. Organized piles of smooth stones, straight sticks, tough vines, interesting seed pods.",
+    profile: "Prickle is cheerful, clever, and slightly obsessed with building things. Her quills are specialized tools she's shaped over time: lock-picks, levers, tiny saws. She names all inventions terribly (The Super-Scooper 3000, The Vine-Twisty Puller). Her inventions never work on the first try. She keeps a 'failure pile' and talks through her building process aloud.",
+    friends: "Spots (her biggest fan and worst tester), Pointy (most reliable tester), Digs (she built him a headlamp), Nuru (they share building tips).",
+    villains: "Cackle and Snort sometimes steal her inventions or get tangled in prototypes.",
+    tone: "Cheerful, clever, STEM-adjacent. Building montage energy.",
+    hooks: ["Prickle's favorite multi-tool quill gets stolen by Cackle. She has to track it down.", "Prickle builds a bridge that collapses mid-crossing with Pointy on it.", "Prickle tries to teach Spots to build. He gets vines tangled around himself.", "Cackle and Snort have been using her workshop at night to build their own terrible inventions."],
+    always: "Makes a 'shing!' sound when pulling out a quill. Tests everything three times. Organizes everything obsessively.",
+    never: "Never have her inventions work perfectly first try. Never make her impatient with others' lack of skill. Never have her run out of ideas." },
+  { id: "cackle_snort", icon: "😂💤", label: "Cackle & Snort", tagline: "Why work hard when you can work sneaky? Also, can we nap first?", group: "villains",
+    world: "Rocky outcrops and hidden gullies on the edge of the Bright Savannah. Their den is always messy and smells like whatever scheme they tried last.",
+    profile: "Cackle is tall, lanky, never stops laughing at his own terrible jokes. He's the idea guy behind every scheme. Snort is short, round, permanently exhausted. He just wants to nap. Cackle drags him into everything. Their schemes always backfire. They're not evil, just lazy and selfish.",
+    friends: "Each other (reluctantly). Sometimes team up with Snap the Crocodile for bigger schemes.",
+    villains: "THEY are the villains. But bumbling ones. Their plans always fail hilariously.",
+    tone: "Slapstick comedy. Villain perspective stories are told from THEIR point of view trying (and failing) to outsmart the Speedstompers.",
+    hooks: ["Cackle's 'brilliant' plan to dam the river for a private mud pool floods half the savannah.", "Snort falls asleep in the middle of the Speedstompers' base and nobody notices for hours.", "Cackle accidentally saves a baby animal while trying to steal its food. He's confused about whether this makes him a hero.", "Snort refuses to help Cackle. Cackle does it alone and gets stuck. Snort debates whether to rescue him or nap."],
+    always: "Cackle laughs hysterically at his own jokes at the exact moment his scheme falls apart. Snort lets out a massive dramatic groan whenever Cackle suggests a plan.",
+    never: "Never make them truly scary or dangerous. Never make Cackle's jokes actually funny. Never make Snort enthusiastic about being a villain." },
+  { id: "stretch", icon: "🦒", label: "Stretch the Giraffe", tagline: "See that far-off dust cloud? Let me take a closer look...", group: "allies",
+    world: "The tall acacia groves near Baobab Base. Sleeps standing up, one eye always slightly open.",
+    profile: "Stretch is gentle, thoughtful, and incredibly observant. From his height he sees everything. His long neck creates bridges over small ravines or lifts younger animals to safety. He speaks calmly and slowly. Always knows which way the wind is blowing. Patient with everyone's questions.",
+    friends: "Spots (guides him from above), Pointy, HJG (sometimes perches on his head), Prickle.",
+    villains: "Cackle and Snort hate that they can't sneak up on the savannah because Stretch always sees them.",
+    tone: "Calm, gentle, slightly poetic.",
+    hooks: ["A dust storm reduces visibility to nothing. Stretch is the only one who can see above it.", "Stretch gets his neck tangled in vines during a storm.", "Stretch spots a lost baby animal from miles away and guides the team to it.", "Stretch teaches Spots to look before he runs. Spots tries. He really tries."],
+    always: "Sees things before anyone else. Lowers neck to let smaller animals climb on. Can describe things from above that ground-level animals miss.",
+    never: "Never make him panic. Never have him miss something important. Never make him clumsy to the point of hurting someone." },
+  { id: "swoop", icon: "🐦", label: "Swoop the Hornbill", tagline: "Package delivery? Message service? Distraction dive-bomb? I'm your bird!", group: "allies",
+    world: "The air above the Bright Savannah. Nests in the highest branches of Baobab Base.",
+    profile: "Swoop is quick, enthusiastic, and slightly dramatic. He loves being the messenger because it lets him fly constantly. His precision drops are legendary: he can land a berry in a teammate's mouth from fifty feet up. Also the team's distraction specialist, dive-bombing hyenas when needed.",
+    friends: "Spots (friendly speed rivals), Pointy (delivers things to his back), Prickle (carries her smallest inventions), Kazi (his flying mentor).",
+    villains: "Cackle and Snort, who he loves dive-bombing. They can never reach him.",
+    tone: "Energetic, proud, slightly show-offy.",
+    hooks: ["Swoop's wing gets injured during a storm. He has to stay grounded.", "Swoop carries an urgent message and Cackle and Snort try to intercept him.", "Swoop's precision drop goes wrong and he lands a berry right on Snort's head.", "Swoop tries to teach Spots to fly. Spots jumps off a rock and immediately regrets everything."],
+    always: "Shows off whenever possible. Lands on Pointy's back between deliveries. Talks about himself in dramatic terms. Preens when complimented.",
+    never: "Never make him fail a delivery without good reason. Never make him afraid of heights." },
+  { id: "nuru", icon: "🐗", label: "Nuru the Warthog", tagline: "If you can dream it, I can build it. Probably. Give me a few tries.", group: "allies",
+    world: "Workshop area near rocky hills. Collected stones, sticks, bones, seeds. Sleeps near his latest invention, often waking covered in sawdust.",
+    profile: "Nuru is creative, enthusiastic, and never discouraged by failure. A curved branch becomes a lever, a hollow log becomes a water carrier. His inventions don't always work, but his optimism never fails. He talks to his inventions while building.",
+    friends: "Spots (most enthusiastic tester, even when things explode), Pointy (most reliable tester), Prickle (they share building tips).",
+    villains: "Cackle and Snort sometimes steal his inventions. They never use them right.",
+    tone: "Creative, optimistic, slightly chaotic. Invention montage energy.",
+    hooks: ["Nuru invents a water-collecting device that accidentally floods the hyenas' napping spot.", "Nuru's latest invention collapses with Pointy inside. Everyone has to dig Pointy out.", "Nuru tries to build a flying machine. Swoop watches skeptically from above.", "Cackle and Snort steal his super-scooper."],
+    always: "Never discouraged by failure. Keeps a failure pile. Always has three projects going. Names inventions after their use.",
+    never: "Never make inventions work perfectly first time. Never have him give up on an idea." },
+  { id: "zola", icon: "🐘", label: "Zola the Elephant", tagline: "The savanna never forgets, and neither do I.", group: "allies",
+    world: "The ancient migration routes. Moves slowly through the savannah visiting old landmarks. Rests near Baobab Base.",
+    profile: "Zola is wise, patient, deeply connected to history. She remembers every path, waterhole, and landmark that ever existed. She handles problems with knowledge: where to find water in drought, which paths are safe. She's the team's living map and historian. Traces maps in dirt with her trunk.",
+    friends: "Pointy (they share quiet moments), Hoot (fellow elder), Spots (finds his energy exhausting but charming).",
+    villains: "Cackle and Snort disrespect the old ways and ignore her warnings, usually to their own misfortune.",
+    tone: "Wise, gentle, grand. Like sitting with a grandparent.",
+    hooks: ["A drought threatens. Zola remembers an ancient underground spring.", "Zola tells a ghost story about the Rumble Hills that turns out to be a real mystery.", "Zola teaches the team to read stars for navigation. Spots keeps getting distracted.", "Cackle and Snort ignore Zola's warning and get trapped. The team rescues them."],
+    always: "Speaks slowly and deliberately. Touches landmarks gently. Stories start with 'I remember when...' Always knows which way is north.",
+    never: "Never have her rush. Never have her forget something without reason. Never make her impatient with young animals." },
+  { id: "snap", icon: "🐊", label: "Snap & The Sludge-Trudgers", tagline: "Fair play is for animals who can't win any other way.", group: "villains",
+    world: "Muddy riverbanks and slow-moving waters. Controls a large watering hole. Sludge-Trudgers HQ is a muddy sinkhole.",
+    profile: "Snap is clever, competitive, and convinced rules are for losers. He leads the Sludge-Trudgers, a rival team that cheats constantly. He's not evil, just ruthlessly competitive. He respects winners and despises losing. Smiles with too many teeth. Secretly wishes he had friends like the Speedstompers.",
+    friends: "Cackle and Snort (occasional allies). Various Sludge-Trudger members.",
+    villains: "Snap IS the conflict. His schemes create competitive chaos.",
+    tone: "Competitive, sneaky, sports rivalry energy.",
+    hooks: ["Snap challenges the Speedstompers to a relay race. His team cheats constantly.", "Snap tries to claim the Glimmering Waterhole as crocodile territory.", "Snap's cheating is so obvious even Cackle is embarrassed.", "Snap has to work with the Speedstompers when a bigger threat appears. He's very grumpy about it."],
+    always: "Always looking for an angle. Gets furious when caught cheating. Underestimates teamwork.",
+    never: "Never make him truly dangerous. Never have him win fairly. Never make him irredeemable." },
+  { id: "custom", icon: "✨", label: "Your Own Idea", tagline: "Describe any character or world. The AI builds it for you.", group: "custom",
+    world: "", profile: "", friends: "", villains: "", tone: "", hooks: [], always: "", never: "" },
+];
+
+const STORYTIME_DENSITY = [
+  { id: 'short', label: 'Short', sub: '400-500 words', icon: '⚡', words: '400-500', desc: 'Quick and breezy. A few minutes of story.' },
+  { id: 'quest', label: 'Quest', sub: '800-1000 words', icon: '📖', words: '800-1000', desc: 'Full story with room to breathe.' },
+  { id: 'cinematic', label: 'Cinematic', sub: '1400-1800 words', icon: '🪶', words: '1400-1800', desc: 'Rich, immersive, every scene fully painted.' },
+];
+
+const STORYTIME_READING_LEVELS = [
+  { id: 'young', label: 'Ages 5-7', desc: 'Simple words, short sentences, sound effects, humor. Early chapter book feel.' },
+  { id: 'mid', label: 'Ages 8-10', desc: 'Mixed sentence length, richer vocabulary, emotional depth. Middle-grade feel.' },
+  { id: 'older', label: 'Ages 11+', desc: 'Full vocabulary, moral complexity, layered prose. YA feel.' },
 ];
 
 const STORYTIME_LENGTHS = [
@@ -1838,9 +1930,10 @@ const STORYTIME_LENGTHS = [
 function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedVoice, setSelectedVoice, availableVoices, onBack }) {
   const [phase, setPhase] = useState("setup");
   const [listenerName, setListenerName] = useState("");
-  const [listenerAge, setListenerAge] = useState("");
-  const [genre, setGenre] = useState(null);
+  const [selectedChar, setSelectedChar] = useState(null);
   const [storyLength, setStoryLength] = useState("medium");
+  const [storyDensity, setStoryDensity] = useState("quest");
+  const [readingLevel, setReadingLevel] = useState("mid");
   const [customPrompt, setCustomPrompt] = useState("");
   const [worldSeed, setWorldSeed] = useState(null);
   const [story, setStory] = useState(null);
@@ -1883,12 +1976,26 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
 
   async function generateStory() {
     setLoading(true); setError(null); setLoadingSeconds(0);
-    const age = parseInt(listenerAge) || 7;
-    const readLvl = age <= 7 ? "Simple words, short sentences, sound effects, humor. Early chapter book feel." : age <= 10 ? "Mixed sentence length, richer vocabulary, emotional depth. Middle-grade feel." : "Full vocabulary, moral complexity, layered prose. YA feel.";
+    const rl = STORYTIME_READING_LEVELS.find(r => r.id === readingLevel) || STORYTIME_READING_LEVELS[1];
+    const nd = STORYTIME_DENSITY.find(d => d.id === storyDensity) || STORYTIME_DENSITY[1];
     const lengthSpec = STORYTIME_LENGTHS.find(l => l.id === storyLength);
     const seedContext = worldSeed ? `\nWORLD CONTEXT (from a previous adventure): World: ${worldSeed.world}. Tone: ${worldSeed.tone}. Thread: ${worldSeed.thread || "none"}. Villain: ${worldSeed.villain || "unknown"}. Use this world as the setting. Honor the unresolved thread. The villain may appear. This is a new story in the same universe, not a continuation.\n` : "";
 
-    const sysPrompt = `You are a master storyteller. Generate a complete, linear story for a child listener. No choices, no interactivity. Just a beautiful story meant to be read aloud.\n\nRespond with ONLY valid JSON, no markdown:\n{"title":"string","content":"the full story with \\n paragraph breaks","mood":"one word mood","worldSeed":{"world":"setting name","tone":"tone","thread":"one sentence unresolved thread for future stories","villain":"villain name or null"}}\n\nThe story must be ${lengthSpec?.words || "800-1000 words"}.\nListener: ${listenerName || "a child"}, age ${age}.\nReading level: ${readLvl}\nGenre: ${genre?.label || "bedtime story"}\n${customPrompt ? `Special request: ${customPrompt}\n` : ""}${seedContext}\nRules:\n- Write the full story. Beginning, middle, end.\n- Match the genre and tone perfectly.\n- Use sensory language. Sounds, textures, colors, smells.\n- For bedtime stories: end with settling, not excitement. The last paragraph should feel like closing your eyes.\n- For adventure/funny: end with satisfaction and a hint of what might come next.\n- Include at least one memorable character name and one vivid setting detail.\n- No violence beyond bumps and scrapes. No scary content for ages under 8.\n- PACING FOR READ-ALOUD: Use shorter sentences in the final third. Slow the rhythm progressively. The last three paragraphs should use longer pauses (ellipses), softer language, and settle toward stillness. End every bedtime story with a closing-your-eyes feeling. For all genres, the final paragraph should feel like exhaling.\n- worldSeed should capture the world you created so someone could start a new story there later.`;
+    let charContext = "";
+    if (selectedChar && selectedChar.id !== "custom") {
+      charContext = `\nCHARACTER: ${selectedChar.label}
+WORLD: ${selectedChar.world}
+WHO THEY ARE: ${selectedChar.profile}
+FRIENDS & ALLIES: ${selectedChar.friends}
+VILLAINS & CONFLICT: ${selectedChar.villains}
+TONE: ${selectedChar.tone}
+STORY HOOKS (pick one or create your own in the same spirit): ${(selectedChar.hooks || []).join(" | ")}
+THINGS TO ALWAYS INCLUDE: ${selectedChar.always}
+THINGS TO NEVER DO: ${selectedChar.never}
+Use these characters, this world, and these rules. The story must feel like an episode of an ongoing series featuring ${selectedChar.label}. Supporting characters from the friends list should appear naturally.\n`;
+    }
+
+    const sysPrompt = `You are a master storyteller for the Savanna Speedstompers universe. Generate a complete, linear story for a child listener. No choices, no interactivity. Just a beautiful story meant to be read aloud.\n\nRespond with ONLY valid JSON, no markdown:\n{"title":"string","content":"the full story with \\n paragraph breaks","mood":"one word mood","worldSeed":{"world":"setting name","tone":"tone","thread":"one sentence unresolved thread for future stories","villain":"villain name or null"}}\n\nNARRATIVE DENSITY: ${nd.label}. The story must be ${nd.words} words. ${nd.desc}\nLENGTH: ${lengthSpec?.words || "800-1000 words"}\nREADING LEVEL: ${rl.desc}\nListener: ${listenerName || "a child"}.\n${charContext}${customPrompt ? `Special request: ${customPrompt}\n` : ""}${seedContext}\nRules:\n- Write the full story. Beginning, middle, end.\n- Use sensory language. Sounds, textures, colors, smells.\n- For bedtime-toned stories: end with settling, not excitement. The last paragraph should feel like closing your eyes.\n- For action/funny stories: end with satisfaction and a hint of what might come next.\n- No violence beyond bumps and scrapes.\n- PACING FOR READ-ALOUD: Use shorter sentences in the final third. Slow the rhythm progressively. The last three paragraphs should use longer pauses (ellipses), softer language, and settle toward stillness. The final paragraph should feel like exhaling.\n- worldSeed should capture the world you created so someone could start a new story there later.\n- If a character profile was provided, stay faithful to it. Use the character's voice, habits, catchphrases, and relationships exactly as described. Never violate the "Things to Never Do" rules.`;
 
     const provObj = PROVIDERS.find(p => p.id === provider);
     try {
@@ -1913,7 +2020,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
         saveWorldSeed({ ...parsed.worldSeed, title: parsed.title, date: new Date().toLocaleDateString(), sourceMode: "storytime" });
       }
       setPhase("reading");
-      completeChallenge("storytime", { soundscape, storyLength, genre: genre?.id, usedWorldSeed: !!worldSeed, continued: false });
+      completeChallenge("storytime", { soundscape, storyLength, character: selectedChar?.id, usedWorldSeed: !!worldSeed, continued: false });
     } catch (e) { setError(e.message || "Story generation failed."); }
     setLoading(false);
   }
@@ -1931,11 +2038,12 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
     // Generate with explicit params since state is async
     (async () => {
       setLoading(true); setError(null); setLoadingSeconds(0);
-      const age = parseInt(listenerAge) || 7;
-      const readLvl = age <= 7 ? "Simple words, short sentences, sound effects, humor." : age <= 10 ? "Mixed sentence length, richer vocabulary, emotional depth." : "Full vocabulary, moral complexity, layered prose.";
+      const rl = STORYTIME_READING_LEVELS.find(r => r.id === readingLevel) || STORYTIME_READING_LEVELS[1];
+      const nd = STORYTIME_DENSITY.find(d => d.id === storyDensity) || STORYTIME_DENSITY[1];
       const lengthSpec = STORYTIME_LENGTHS.find(l => l.id === storyLength);
       const seedContext = contSeed ? `\nWORLD CONTEXT (sequel): World: ${contSeed.world}. Tone: ${contSeed.tone}. Thread: ${contSeed.thread || "none"}. Villain: ${contSeed.villain || "unknown"}. Continue in this world. Honor the unresolved thread. This is a direct sequel.\n` : "";
-      const sysPrompt = `You are a master storyteller. Generate a complete, linear story for a child listener. No choices, no interactivity. Just a beautiful story meant to be read aloud.\n\nRespond with ONLY valid JSON, no markdown:\n{"title":"string","content":"the full story with \\n paragraph breaks","mood":"one word mood","worldSeed":{"world":"setting name","tone":"tone","thread":"one sentence unresolved thread for future stories","villain":"villain name or null"}}\n\nThe story must be ${lengthSpec?.words || "800-1000 words"}.\nListener: ${listenerName || "a child"}, age ${age}.\nReading level: ${readLvl}\nGenre: ${genre?.label || "bedtime story"}\nSpecial request: ${contPrompt}\n${seedContext}\nRules:\n- This is a SEQUEL. Same world, same characters, new story arc.\n- Write the full story. Beginning, middle, end.\n- Use sensory language.\n- PACING FOR READ-ALOUD: Shorter sentences in the final third. The final paragraph should feel like exhaling.\n- worldSeed should capture the updated world state for future stories.`;
+      let charContext = selectedChar && selectedChar.id !== "custom" ? `\nCHARACTER: ${selectedChar.label}\nWORLD: ${selectedChar.world}\nWHO THEY ARE: ${selectedChar.profile}\nTHINGS TO ALWAYS INCLUDE: ${selectedChar.always}\nTHINGS TO NEVER DO: ${selectedChar.never}\n` : "";
+      const sysPrompt = `You are a master storyteller for the Savanna Speedstompers universe. Generate a complete sequel story. No choices, no interactivity.\n\nRespond with ONLY valid JSON, no markdown:\n{"title":"string","content":"the full story with \\n paragraph breaks","mood":"one word mood","worldSeed":{"world":"setting name","tone":"tone","thread":"one sentence unresolved thread for future stories","villain":"villain name or null"}}\n\nNARRATIVE DENSITY: ${nd.label}. The story must be ${nd.words} words.\nLENGTH: ${lengthSpec?.words || "800-1000 words"}\nREADING LEVEL: ${rl.desc}\nListener: ${listenerName || "a child"}.\n${charContext}Special request: ${contPrompt}\n${seedContext}\nRules:\n- This is a SEQUEL. Same world, same characters, new story arc.\n- Write the full story. Beginning, middle, end.\n- Use sensory language.\n- PACING FOR READ-ALOUD: Shorter sentences in the final third. The final paragraph should feel like exhaling.\n- worldSeed should capture the updated world state for future stories.`;
       const provObj = PROVIDERS.find(p => p.id === provider);
       try {
         const raw = await callAI(provider, apiKey, provObj.model, [{ role: "user", content: "Generate the sequel story now." }], sysPrompt);
@@ -1951,7 +2059,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
         }
         setStory(parsed); setShowAllText(false); setVisibleParas(0); setMusicActive(true); SFX.begin();
         if (parsed.worldSeed) saveWorldSeed({ ...parsed.worldSeed, title: parsed.title, date: new Date().toLocaleDateString(), sourceMode: "storytime" });
-        setPhase("reading"); completeChallenge("storytime", { soundscape, storyLength, genre: genre?.id, usedWorldSeed: true, continued: true });
+        setPhase("reading"); completeChallenge("storytime", { soundscape, storyLength, character: selectedChar?.id, usedWorldSeed: true, continued: true });
       } catch (e) { setError(e.message || "Story generation failed."); setPhase("setup"); }
       setLoading(false);
     })();
@@ -1979,32 +2087,80 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
   // SETUP
   if (phase === "setup") {
     const seeds = getWorldSeeds();
+    const duoChars = SPEEDSTOMPER_CHARACTERS.filter(c => c.group === "duo");
+    const squadChars = SPEEDSTOMPER_CHARACTERS.filter(c => c.group === "squad");
+    const allyChars = SPEEDSTOMPER_CHARACTERS.filter(c => c.group === "allies");
+    const villainChars = SPEEDSTOMPER_CHARACTERS.filter(c => c.group === "villains");
+    const customChar = SPEEDSTOMPER_CHARACTERS.find(c => c.group === "custom");
+    const charCard = (ch) => (
+      <button key={ch.id} onClick={() => { SFX.select(); setSelectedChar(ch); }} style={{ background: selectedChar?.id === ch.id ? "rgba(139,92,246,0.15)" : C.card, border: `1px solid ${selectedChar?.id === ch.id ? "#a78bfa" : C.border}`, borderRadius: 12, padding: "10px 12px", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "all 0.2s" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 20 }}>{ch.icon}</span>
+          <span style={{ color: selectedChar?.id === ch.id ? "#a78bfa" : C.cream, fontWeight: 700, fontSize: 13 }}>{ch.label}</span>
+        </div>
+        <p style={{ color: C.textDim, margin: 0, fontSize: 10, lineHeight: 1.4 }}>{ch.tagline}</p>
+      </button>
+    );
     return shell("Storytime", (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, paddingTop: 10 }}>
         <div style={{ textAlign: "center", marginBottom: 4 }}>
           <div style={{ fontSize: 36, marginBottom: 4 }}>🌙</div>
           <h2 style={{ color: "#a78bfa", fontSize: 24, margin: "0 0 4px", fontWeight: 800 }}>Storytime</h2>
-          <p style={{ color: C.creamDim, fontSize: 14, margin: 0, fontStyle: "italic" }}>A story just for you. No choices, just listen.</p>
+          <p style={{ color: C.creamDim, fontSize: 14, margin: 0, fontStyle: "italic" }}>Pick a character. Their story begins.</p>
           <div style={{ width: 60, height: 2, background: "linear-gradient(90deg, transparent, #a78bfa, transparent)", margin: "10px auto 0" }} />
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
-          <input value={listenerName} onChange={e => setListenerName(e.target.value)} placeholder="Listener's name" style={{ flex: 2, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", color: C.cream, fontSize: 14, fontFamily: "inherit" }} />
-          <input value={listenerAge} onChange={e => setListenerAge(e.target.value)} placeholder="Age" type="number" style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", color: C.cream, fontSize: 14, fontFamily: "inherit" }} />
+        <input value={listenerName} onChange={e => setListenerName(e.target.value)} placeholder="Listener's name" style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", color: C.cream, fontSize: 14, fontFamily: "inherit", boxSizing: "border-box" }} />
+
+        {/* Featured Duo */}
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Featured</p>
+        {duoChars.map(charCard)}
+
+        {/* The Squad */}
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>The Squad</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          {squadChars.map(charCard)}
         </div>
 
-        <p style={{ color: C.textDim, fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1 }}>Genre</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-          {STORYTIME_GENRES.map(g => (
-            <button key={g.id} onClick={() => { SFX.select(); setGenre(g); }} style={{ background: genre?.id === g.id ? "rgba(139,92,246,0.12)" : C.card, border: `1px solid ${genre?.id === g.id ? "#a78bfa" : C.border}`, borderRadius: 10, padding: "10px 10px", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
-              <span style={{ fontSize: 18 }}>{g.emoji}</span>
-              <p style={{ color: genre?.id === g.id ? "#a78bfa" : C.cream, fontWeight: 600, margin: "4px 0 2px", fontSize: 12 }}>{g.label}</p>
-              <p style={{ color: C.textDim, margin: 0, fontSize: 10, lineHeight: 1.4 }}>{g.desc}</p>
+        {/* Allies */}
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Allies</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {allyChars.map(charCard)}
+        </div>
+
+        {/* Villains */}
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Villains</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {villainChars.map(charCard)}
+        </div>
+
+        {/* Custom */}
+        {customChar && charCard(customChar)}
+
+        {/* Narrative Density */}
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Narrative Density</p>
+        <div style={{ display: "flex", gap: 8 }}>
+          {STORYTIME_DENSITY.map(nd => (
+            <button key={nd.id} onClick={() => { SFX.select(); setStoryDensity(nd.id); }} style={{ flex: 1, background: storyDensity === nd.id ? "rgba(139,92,246,0.15)" : C.card, border: `1px solid ${storyDensity === nd.id ? "#a78bfa" : C.border}`, borderRadius: 14, padding: "10px 8px", cursor: "pointer", textAlign: "center", fontFamily: "inherit", transition: "all 0.2s" }}>
+              <span style={{ fontSize: 16 }}>{nd.icon}</span>
+              <p style={{ color: storyDensity === nd.id ? "#a78bfa" : C.cream, fontWeight: 700, margin: "4px 0 2px", fontSize: 12 }}>{nd.label}</p>
+              <p style={{ color: C.textDim, margin: 0, fontSize: 10 }}>{nd.sub}</p>
             </button>
           ))}
         </div>
 
-        <p style={{ color: "#a78bfa", fontSize: 11, margin: "8px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Length</p>
+        {/* Reading Level */}
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Reading Level</p>
+        <div style={{ display: "flex", gap: 8 }}>
+          {STORYTIME_READING_LEVELS.map(rl => (
+            <button key={rl.id} onClick={() => { SFX.select(); setReadingLevel(rl.id); }} style={{ flex: 1, background: readingLevel === rl.id ? "rgba(139,92,246,0.15)" : C.card, border: `1px solid ${readingLevel === rl.id ? "#a78bfa" : C.border}`, borderRadius: 24, padding: "10px 8px", cursor: "pointer", textAlign: "center", fontFamily: "inherit", transition: "all 0.2s" }}>
+              <p style={{ color: readingLevel === rl.id ? "#a78bfa" : C.cream, margin: 0, fontSize: 13, fontWeight: 700 }}>{rl.label}</p>
+            </button>
+          ))}
+        </div>
+
+        {/* Length */}
+        <p style={{ color: "#a78bfa", fontSize: 11, margin: "4px 0 2px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 700 }}>Length</p>
         <div style={{ display: "flex", gap: 8 }}>
           {STORYTIME_LENGTHS.map(l => (
             <button key={l.id} onClick={() => { SFX.select(); setStoryLength(l.id); }} style={{ flex: 1, background: storyLength === l.id ? "rgba(139,92,246,0.15)" : C.card, border: `1px solid ${storyLength === l.id ? "#a78bfa" : C.border}`, borderRadius: 24, padding: "10px 8px", cursor: "pointer", textAlign: "center", fontFamily: "inherit", transition: "all 0.2s" }}>
@@ -2013,12 +2169,13 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
           ))}
         </div>
 
-        <input value={customPrompt} onChange={e => setCustomPrompt(e.target.value)} placeholder="Special request? (e.g. 'a story about a brave fox who lives in the clouds')" style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 14px", minHeight: 52, color: C.cream, fontSize: 14, boxSizing: "border-box", fontFamily: "inherit", fontStyle: customPrompt ? "normal" : "italic" }} />
+        {/* Special Request */}
+        <input value={customPrompt} onChange={e => setCustomPrompt(e.target.value)} placeholder="Special request? (e.g. 'Spots gets lost in a sandstorm')" style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 14px", minHeight: 52, color: C.cream, fontSize: 14, boxSizing: "border-box", fontFamily: "inherit", fontStyle: customPrompt ? "normal" : "italic" }} />
 
         {/* World Seeds */}
         {seeds.length > 0 && (
           <div>
-            <button onClick={() => setShowSeeds(!showSeeds)} style={{ background: "none", border: `1px solid rgba(139,92,246,0.3)`, color: "#a78bfa", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, fontFamily: "inherit", width: "100%" }}>
+            <button onClick={() => setShowSeeds(!showSeeds)} style={{ background: "none", border: "1px solid rgba(139,92,246,0.3)", color: "#a78bfa", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, fontFamily: "inherit", width: "100%" }}>
               {showSeeds ? "Hide saved worlds" : `🌍 Enter a world from a past adventure (${seeds.length})`}
             </button>
             {showSeeds && <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
@@ -2026,8 +2183,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
               {seeds.map((s, i) => (
                 <button key={i} onClick={() => { SFX.select(); setWorldSeed(s); setShowSeeds(false); }} style={{ background: worldSeed === s ? "rgba(139,92,246,0.15)" : C.card, border: `1px solid ${worldSeed === s ? "#a78bfa" : C.border}`, borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
                   <p style={{ color: "#a78bfa", fontWeight: 600, margin: 0, fontSize: 13 }}>{s.title || s.world}</p>
-                  <p style={{ color: C.textDim, margin: "2px 0 0", fontSize: 11 }}>{s.date} · {s.sourceMode || "adventure"} · {s.tone}</p>
-                  {s.thread && <p style={{ color: C.creamDim, margin: "4px 0 0", fontSize: 11, fontStyle: "italic" }}>{s.thread}</p>}
+                  <p style={{ color: C.textDim, margin: "2px 0 0", fontSize: 11 }}>{s.date} · {s.sourceMode || "adventure"}</p>
                 </button>
               ))}
             </div>}
@@ -2058,14 +2214,13 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
           ))}
         </div>
 
-        {/* iOS advisory */}
         {/iPad|iPhone|iPod/.test(navigator.userAgent) && <p style={{ color: C.textDim, fontSize: 11, margin: "4px 0 0", fontStyle: "italic" }}>Note: On iPhone/iPad, the screen must stay on for Read Aloud to continue.</p>}
 
         <VoicePicker selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice} availableVoices={availableVoices} accentColor="#a78bfa" />
 
         {error && <ErrorBox error={error} onRetry={generateStory} />}
-        <PrimaryBtn disabled={!genre || !listenerAge || loading} onClick={generateStory} style={{ marginTop: 8, background: loading ? C.textDim : "linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)" }}>
-          {loading ? `Creating${".".repeat((loadingSeconds % 3) + 1)} (${loadingSeconds}s)` : worldSeed ? `Generate Story in ${worldSeed.title || worldSeed.world}` : "Generate Story"}
+        <PrimaryBtn disabled={!selectedChar || loading} onClick={generateStory} style={{ marginTop: 8, background: loading ? C.textDim : "linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)" }}>
+          {loading ? `Creating${".".repeat((loadingSeconds % 3) + 1)} (${loadingSeconds}s)` : selectedChar?.id === "custom" ? "Generate Story" : `Generate ${selectedChar?.label || ''} Story`}
         </PrimaryBtn>
       </div>
     ), true, onBack);
@@ -2105,7 +2260,7 @@ function StorytimeMode({ provider, apiKey, muted, setMuted, childMode, selectedV
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <PrimaryBtn onClick={continueStorytimeStory} style={{ background: "linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)" }}>📖 Continue This Story</PrimaryBtn>
-              <button onClick={() => { stopSpeak(); setPhase("setup"); setStory(null); setMusicActive(false); setSessionRating(0); setSessionTags([]); setWorldSeed(null); setCustomPrompt(""); }} style={{ background: "none", border: "1px solid rgba(139,92,246,0.4)", color: "#a78bfa", borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 15, fontFamily: "inherit" }}>✨ New Story</button>
+              <button onClick={() => { stopSpeak(); setPhase("setup"); setStory(null); setMusicActive(false); setSessionRating(0); setSessionTags([]); setWorldSeed(null); setCustomPrompt(""); setSelectedChar(null); setStoryDensity("quest"); setReadingLevel("mid"); }} style={{ background: "none", border: "1px solid rgba(139,92,246,0.4)", color: "#a78bfa", borderRadius: 12, padding: "14px", cursor: "pointer", fontSize: 15, fontFamily: "inherit" }}>✨ New Story</button>
               <button onClick={() => { stopSpeak(); onBack(); }} style={{ background: "none", border: `1px solid ${C.textDim}30`, color: C.textDim, borderRadius: 12, padding: "12px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Main Menu</button>
             </div>
           </div>
